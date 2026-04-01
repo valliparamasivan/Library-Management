@@ -2,6 +2,7 @@
 
 import FormInput from "@/components/form/FormInput";
 import FormSelect from "@/components/form/FormSelect";
+import FormSwitch from "@/components/form/FormSwitch";
 import FormWrapper from "@/components/form/FormWrapper";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
@@ -25,6 +26,7 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
       email: "",
       mobile: "",
       role: "",
+      status: true,
       profileImage: null,
       createPassword: "",
       confirmPassword: "",
@@ -48,14 +50,12 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
         setProfileImageUrl(null);
       }
 
-      const mappedRole = rolesDataArr.find(r => (r.roleName || r.role) === employeeData.role);
-      const roleIdStr = mappedRole ? String(mappedRole.roleId) : "";
-      
       reset({
         employeeName: employeeData.employeeName || "",
         email: employeeData.emailId || "",
         mobile: employeeData.mobileNo || "",
-        role: roleIdStr,
+        role: employeeData.roleId ? String(employeeData.roleId) : "",
+        status: employeeData.active !== false,
         profileImage: null,
         createPassword: "",
         confirmPassword: "",
@@ -67,6 +67,7 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
         email: "",
         mobile: "",
         role: "",
+        status: true,
         profileImage: null,
         createPassword: "",
         confirmPassword: "",
@@ -76,30 +77,31 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
 
   const { mutateAsync: employeeCreate } = useEmployeeCreate();
   const { mutateAsync: employeeUpdate } = useEmployeeUpdate();
-  const { showSuccessToast, setFieldError } = useErrorHandler(setError);
+  const { showSuccessToast, showErrorToast, setFieldError } = useErrorHandler(setError);
 
   const onSubmit = async (data) => {
     try {
-      const submittedRoleData = rolesDataArr.find(r => String(r.roleId) === data.role);
-      const submittedRoleName = submittedRoleData?.roleName || submittedRoleData?.role || data.role;
-      
       const formData = new FormData();
       formData.append("employeeName", data.employeeName);
       formData.append("emailId", data.email);
       formData.append("mobileNo", data.mobile);
-      formData.append("role", submittedRoleName);
-      formData.append("active", "true");
+      formData.append("role", data.role);
+      formData.append("active", String(Boolean(data.status)));
 
       if (data.profileImage instanceof File) {
         formData.append("profileImage", data.profileImage);
       }
 
       const response = id ? await employeeUpdate({ id, data: formData }) : await employeeCreate(formData);
-      showSuccessToast(response?.message || (id ? "Employee updated successfully" : "Employee created successfully"));
+      const successMsg = (typeof response?.data === "string" ? response.data : null)
+        || response?.message
+        || (id ? "Employee updated successfully" : "Employee created successfully");
+      showSuccessToast(successMsg);
       handleCancel();
       router.refresh();
     } catch (error) {
       setFieldError(error);
+      showErrorToast(error);
     }
   };
 
@@ -221,7 +223,16 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
                     options={roleOptions}
                     required
                   />
-
+                  <div className="flex items-center justify-between border border-[#E2E8F0] rounded-lg p-3">
+                    <span className="text-sm font-semibold text-gray-900">Status</span>
+                    <FormSwitch
+                      control={control}
+                      name="status"
+                      label=""
+                      switchPosition="right"
+                      className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

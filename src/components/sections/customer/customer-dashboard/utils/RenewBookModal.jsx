@@ -11,12 +11,11 @@ import { useErrorHandler } from '@/components/custom-hooks/useErrorHandler';
 
 const RenewBookModal = ({ open, onOpenChange, book, onConfirm, isLoading = false }) => {
   if (!book) return null;
-  console.log(book);
 
   const currentDueDate = new Date(book.dueDate);
   const newDueDate = new Date(book.issuedDate);
   newDueDate.setDate(newDueDate.getDate() + 14);
-  const { mutateAsync: renewBook } = useRenewBook();
+  const { mutateAsync: renewBook, isPending } = useRenewBook();
   const { showSuccessToast, showErrorToast } = useErrorHandler();
 
   const isLastRenewal = book.renewalsLeft === 1;
@@ -40,7 +39,8 @@ const RenewBookModal = ({ open, onOpenChange, book, onConfirm, isLoading = false
     return s3Url && !img.startsWith('http') && !img.startsWith('/') ? `${s3Url}/books-image/${img}` : img;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
       const payload = {
         userId: "user",
@@ -49,19 +49,29 @@ const RenewBookModal = ({ open, onOpenChange, book, onConfirm, isLoading = false
 
       const response = await renewBook(payload);
 
-      showSuccessToast(
-        response?.message || response?.data || "Book renewed successfully"
-      );
+      const successMsg = (typeof response?.data === "string" ? response.data : null)
+        || response?.message
+        || "Book renewed successfully";
+      showSuccessToast(successMsg);
+      onOpenChange(false);
+      if (onConfirm) onConfirm();
     } catch (error) {
-      showErrorToast(
-        error?.message || "Something went wrong while renewing the book"
-      );
+      // On error: show toast but keep modal open, no refresh
+      const errorMessages = error?.data?.errorMessages || error?.errorMessages;
+      if (errorMessages) {
+        const firstMessage = Object.values(errorMessages).flat()[0];
+        if (firstMessage) {
+          showErrorToast(firstMessage);
+          return;
+        }
+      }
+      showErrorToast(error);
     }
   };
 
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(val) => { if (!isPending) onOpenChange(val); }}>
       <DialogContent
         className="max-w-lg w-full p-0 gap-0 overflow-hidden max-w-[90vw] sm:max-w-lg"
         hideClose={true}
@@ -77,10 +87,10 @@ const RenewBookModal = ({ open, onOpenChange, book, onConfirm, isLoading = false
             </h2>
           </div>
           <button
-            onClick={() => !isLoading && onOpenChange(false)}
+            onClick={() => !isPending && onOpenChange(false)}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             aria-label="Close modal"
-            disabled={isLoading}
+            disabled={isPending}
           >
             <X size={20} />
           </button>
@@ -177,7 +187,7 @@ const RenewBookModal = ({ open, onOpenChange, book, onConfirm, isLoading = false
               variant="outline"
               className="flex-1"
               onClick={() => onOpenChange(false)}
-              disabled={isLoading}
+              disabled={isPending}
             >
               Cancel
             </Button>
@@ -185,9 +195,9 @@ const RenewBookModal = ({ open, onOpenChange, book, onConfirm, isLoading = false
               type="submit"
               variant="default"
               className="flex-1 bg-[#0B63CE] hover:bg-[#0B63CE]/90 text-white"
-              disabled={isLoading}
+              disabled={isPending}
             >
-              {isLoading ? (
+              {isPending ? (
                 <span className="flex items-center gap-2">
                   <RefreshCw size={16} className="animate-spin" />
                   Renewing...

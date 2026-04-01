@@ -187,9 +187,9 @@ const CirculationSection = () => {
           author: book.author,
           isbn: book.isbn,
           year: book.year || "N/A",
-          totalCopies: book.totalCopies,
-          issuedCopies: book.issuedCopies,
-          availableCopies: book.availableCopies,
+          totalCopies: book.totalCopies || 0,
+          issuedCopies: book.issuedCopies || 0,
+          availableCopies: ((book.totalCopies || 0) - (book.issuedCopies || 0)) + "/" + (book.totalCopies || 0),
           bookImageUrl: book.bookImageUrl,
         }));
 
@@ -482,6 +482,8 @@ const CirculationSection = () => {
       sortable: false,
       minWidth: "120px",
       render: (record) => {
+        const isCheckedIn = record.status === "Check-In" || record.status === "Checked-In" || record.status === "Returned";
+        if (isCheckedIn) return <span className="text-xs text-gray-400">—</span>;
         const isOverdue = record.status === "Overdue";
         return (
           <div className="flex items-center gap-1">

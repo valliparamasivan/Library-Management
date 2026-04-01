@@ -7,11 +7,14 @@ import ButtonWidget from '@/components/widgets/ButtonWidget';
 import SearchWidget from '@/components/widgets/SearchWidget';
 import TableWidget from '@/components/widgets/TableWidget';
 import { getStatusColor } from '@/helpers/FuntionalHelpers';
-import { Plus, SquarePen, Trash2 } from 'lucide-react';
+import { Plus, SquarePen } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SettingsViewNavigation from '../utils/settingsViewNavigation';
 import RoleFormDialog from './utils/roleFormDialog';
+import { useChangeRoleStatus } from '@/store/hooks/SettingsHooks';
+import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
+import { Switch } from '@/components/ui/switch';
 
 const RoleSection = ({ response: apiResponse }) => {
     const router = useRouter();
@@ -21,6 +24,8 @@ const RoleSection = ({ response: apiResponse }) => {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const { mutateAsync: changeStatus } = useChangeRoleStatus();
+    const { showErrorToast, showSuccessToast } = useErrorHandler();
 
     const {
         page: currentPage,
@@ -80,6 +85,16 @@ const RoleSection = ({ response: apiResponse }) => {
         }
     };
 
+    const handleStatusToggle = async (id) => {
+        try {
+            const response = await changeStatus(id);
+            showSuccessToast(response?.message || "Status updated successfully");
+            router.refresh();
+        } catch (error) {
+            showErrorToast(error);
+        }
+    };
+
     const handleEditClick = (id) => {
         setEditingId(id);
         setIsDialogOpen(true);
@@ -135,12 +150,12 @@ const RoleSection = ({ response: apiResponse }) => {
             lgMinWidth: "120px",
             render: (record) => {
                 const isActive = record.status ?? false;
-                const statusText = isActive ? "Active" : "Inactive";
-                const statusColor = getStatusColor(statusText);
                 return (
-                    <span className={`inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-sm ${statusColor}`}>
-                        {statusText}
-                    </span>
+                    <Switch
+                        checked={isActive}
+                        onCheckedChange={() => handleStatusToggle(record.id)}
+                        className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
+                    />
                 );
             },
         },

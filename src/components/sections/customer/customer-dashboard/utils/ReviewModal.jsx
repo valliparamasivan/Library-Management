@@ -39,22 +39,23 @@ const ReviewModal = ({ open, onOpenChange, book, onSubmit, isLoading = false }) 
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const newErrors = {};
-  
+
     if (rating === 0) {
       newErrors.rating = "Please select a rating";
     }
-  
+
     if (!comment || comment.trim().length < 3) {
       newErrors.comment = "Please enter a valid review";
     }
-  
+
+    setErrors(newErrors);
+
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
       return;
     }
-  
+
     try {
       const payload = {
         bookId: book?.bookId,
@@ -142,7 +143,7 @@ const ReviewModal = ({ open, onOpenChange, book, onSubmit, isLoading = false }) 
                     <button
                       key={star}
                       type="button"
-                      onClick={() => { setRating(star); setErrors(prev => ({ ...prev, rating: undefined })); }}
+                      onClick={() => { setRating(star); setErrors(prev => { const { rating, ...rest } = prev; return rest; }); }}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
                       className="group p-0.5 hover:scale-110 transition-transform"
@@ -189,7 +190,7 @@ const ReviewModal = ({ open, onOpenChange, book, onSubmit, isLoading = false }) 
               <textarea
                 id="review-comment"
                 value={comment}
-                onChange={(e) => { setComment(e.target.value); setErrors(prev => ({ ...prev, comment: undefined })); }}
+                onChange={(e) => { setComment(e.target.value); setErrors(prev => { const { comment, ...rest } = prev; return rest; }); }}
                 placeholder="Share your thoughts about this book... What did you like? What could be better?"
                 rows={4}
                 className={cn(

@@ -8,11 +8,11 @@ export default withAuth(
     const userRole = token?.role;
     const { pathname } = req.nextUrl;
 
-    const publicCustomerRoutes = ["/home"];
+    const publicCustomerRoutes = ["/home", "/TermsofService", "/privacy-policy"];
     const isPublicCustomerRoute = publicCustomerRoutes.some((route) =>
       pathname.startsWith(route),
     );
-    
+
     const isCatalogListPage = pathname === "/catalog";
     const isCatalogDetailPage = pathname.startsWith("/catalog/") && pathname !== "/catalog";
     const isCatalogPage = isCatalogListPage || isCatalogDetailPage;
@@ -45,12 +45,17 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    if (isAuthenticated && isPublicCustomerRoute && userRole === "User") {
+    const isHomePage = pathname === "/home" || pathname === "/home/";
+    if (isAuthenticated && isHomePage && userRole === "User") {
       return NextResponse.redirect(new URL("/customer-dashboard", req.url));
     }
 
-    if (isAuthenticated && isPublicCustomerRoute && userRole === "Admin") {
+    if (isAuthenticated && isHomePage && userRole === "Admin") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    if (isPublicCustomerRoute) {
+      return NextResponse.next();
     }
 
     if (isCatalogPage) {
@@ -126,11 +131,11 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
 
-        const publicCustomerRoutes = ["/home"];
+        const publicCustomerRoutes = ["/home", "/TermsofService", "/privacy-policy"];
         const isPublicCustomerRoute = publicCustomerRoutes.some((route) =>
           pathname.startsWith(route),
         );
-        
+
         const isCatalogListPage = pathname === "/catalog";
         const isCatalogDetailPage = pathname.startsWith("/catalog/") && pathname !== "/catalog";
         const isCatalogPage = isCatalogListPage || isCatalogDetailPage;

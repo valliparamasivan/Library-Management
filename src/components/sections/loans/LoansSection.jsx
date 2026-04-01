@@ -101,6 +101,15 @@ const LoansSection = ({ response }) => {
       setIsRenewSuccessOpen(true);
       router.refresh();
     } catch (error) {
+      setIsRenewConfirmDialogOpen(false);
+      const errorMessages = error?.data?.errorMessages || error?.errorMessages;
+      if (errorMessages) {
+        const firstMessage = Object.values(errorMessages).flat()[0];
+        if (firstMessage) {
+          showErrorToast(firstMessage);
+          return;
+        }
+      }
       showErrorToast(error);
     }
   };
@@ -115,6 +124,15 @@ const LoansSection = ({ response }) => {
       setIsCheckInSuccessOpen(true);
       router.refresh();
     } catch (error) {
+      setIsCheckInDialogOpen(false);
+      const errorMessages = error?.data?.errorMessages || error?.errorMessages;
+      if (errorMessages) {
+        const firstMessage = Object.values(errorMessages).flat()[0];
+        if (firstMessage) {
+          showErrorToast(firstMessage);
+          return;
+        }
+      }
       showErrorToast(error);
     }
   };
@@ -298,14 +316,14 @@ const LoansSection = ({ response }) => {
         const isReturnDisabled = ["on-time", "returned"].includes(status);
         const { current, max } = parseRenewalCount(record.renewalCount);
         const isRenewLimitReached = current >= max;
-        const isRenewDisabled = ["on-time", "returned", "renewed", "overdue", "reserved"].includes(status) || isRenewLimitReached;
-        
+        const isRenewDisabled = ["on-time", "returned", "checked-in", "overdue", "reserved"].includes(status) || isRenewLimitReached;
+
         const handleReturnClick = () => {
           handleCheckInClick(record);
         };
-        
+
         const onRenewClick = () => {
-          if (isRenewLimitReached || ["on-time", "returned", "renewed", "overdue", "reserved"].includes(status)) {
+          if (isRenewLimitReached || ["on-time", "returned", "checked-in", "overdue", "reserved"].includes(status)) {
             setRenewLimitUser({
               userName: record.userName || "",
               userDetailId: record.userId || "",

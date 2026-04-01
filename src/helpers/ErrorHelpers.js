@@ -12,12 +12,12 @@ export const errorToast = (error, options = {}) => {
 
   if (typeof error === "string") {
     message = error;
+  } else if (error?.data?.message) {
+    message = error.data.message;
   } else if (error instanceof Error) {
     message = error.message;
   } else if (error?.message) {
     message = error.message;
-  } else if (error?.data?.message) {
-    message = error.data.message;
   }
 
   toast.error(message, {

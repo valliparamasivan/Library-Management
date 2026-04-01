@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'nextjs-toploader/app';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle, BookOpen, Star } from 'lucide-react';
 import Image from 'next/image';
@@ -39,6 +39,7 @@ const BorrowedBooksTab = ({ borrowedList }) => {
 
   const handleConfirmRenewal = () => {
     setIsModalOpen(false);
+    window.location.reload();
   };
 
   const handleReviewClick = (book) => {

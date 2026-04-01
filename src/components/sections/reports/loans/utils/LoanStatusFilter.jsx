@@ -24,6 +24,7 @@ const LoanStatusFilter = () => {
     { label: "Checked-Out", value: 2 },
     { label: "Renewed", value: 3 },
     { label: "Overdue", value: 4 },
+    { label: "Checked-In", value: 5 },
   ];
 
   const handleFilterChange = (value) => {

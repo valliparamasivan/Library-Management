@@ -138,6 +138,7 @@ export const EmployeeFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   mobile: z.string().min(1, "Mobile is required").regex(/^[0-9]{10}$/, "Mobile must be 10 digits"),
   role: z.string().min(1, "Role is required"),
+  status: z.union([z.boolean(), z.number()]).optional(),
   profileImage: z.any().optional(),
   createPassword: z.string().optional(),
   confirmPassword: z.string().optional(),

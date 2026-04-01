@@ -6,7 +6,7 @@ import { Clock, ArrowRight, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 const OverviewTab = ({ overviewList }) => {
   const router = useRouter();
-  const books = overviewList?.data?.content || overviewList || [];
+  const books = overviewList?.data?.content || (Array.isArray(overviewList?.data) ? overviewList.data : Array.isArray(overviewList) ? overviewList : []);
 
   const overdueBooks = books.filter(book => book.isOverdue);
   const dueBooks = books.filter(book => !book.isOverdue && book.daysUntilDue && book.daysUntilDue > 0 && book.daysUntilDue <= 7);

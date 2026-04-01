@@ -35,6 +35,21 @@ export const getRoleById = async (id) => {
     return data;
 };
 
+export const changeRoleStatus = async (roleId) => {
+    const { data } = await clientAxios.put(`/role/changeStatus/${roleId}`);
+    return data;
+};
+
+export const changeEmployeeStatus = async (employeeId) => {
+    const { data } = await clientAxios.put(`/employee/changeStatus/${employeeId}`);
+    return data;
+};
+
+export const getAllRolePermissions = async () => {
+    const { data } = await clientAxios.get("/get_all_roles_permission");
+    return data;
+};
+
 export const locationCreate = async (params) => {
     const { data } = await clientAxios.post("/addLocation", params);
     return data;

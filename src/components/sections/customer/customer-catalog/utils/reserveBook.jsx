@@ -48,11 +48,22 @@ console.log(bookData, "bookData");
 
   const handleConfirm = async () => {
     try {
-      const response = await addReservedBook({ bookId: book?.bookId })
-      showSuccessToast(response.data);
+      const response = await addReservedBook({ bookId: book?.bookId });
+      const successMsg = (typeof response?.data === "string" ? response.data : null)
+        || response?.message
+        || "Book reserved successfully";
+      showSuccessToast(successMsg);
       onOpenChange(false);
     } catch (error) {
-      showErrorToast(error?.data?.message || error?.response?.data?.message || "Reservation failed");
+      const errorMessages = error?.data?.errorMessages || error?.errorMessages;
+      if (errorMessages) {
+        const firstMessage = Object.values(errorMessages).flat()[0];
+        if (firstMessage) {
+          showErrorToast(firstMessage);
+          return;
+        }
+      }
+      showErrorToast(error);
     }
   };
 

@@ -12,6 +12,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SettingsViewNavigation from '../utils/settingsViewNavigation';
 import EmployeeFormDialog from './utils/employeeFormDialog';
+import { useChangeEmployeeStatus } from '@/store/hooks/SettingsHooks';
+import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
+import { Switch } from '@/components/ui/switch';
 
 const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
     const router = useRouter();
@@ -21,6 +24,18 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const { mutateAsync: changeStatus } = useChangeEmployeeStatus();
+    const { showErrorToast, showSuccessToast } = useErrorHandler();
+
+    const handleStatusToggle = async (id) => {
+        try {
+            const response = await changeStatus(id);
+            showSuccessToast(response?.message || "Status updated successfully");
+            router.refresh();
+        } catch (error) {
+            showErrorToast(error);
+        }
+    };
 
     const {
         page: currentPage,
@@ -172,12 +187,12 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
             lgMinWidth: "120px",
             render: (record) => {
                 const isActive = record.status ?? false;
-                const statusText = isActive ? "Active" : "Inactive";
-                const statusColor = getStatusColor(statusText);
                 return (
-                    <span className={`inline-flex items-center justify-center w-20 px-3 py-1.5 text-xs font-medium rounded-sm ${statusColor}`}>
-                        {statusText}
-                    </span>
+                    <Switch
+                        checked={isActive}
+                        onCheckedChange={() => handleStatusToggle(record.id)}
+                        className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
+                    />
                 );
             },
         },

@@ -1,11 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 const CustomerFooter = () => {
-  const router = useRouter();
-
   return (
     <footer className="bg-[#0B1723] text-white border-t border-white/20">
       <div className="mx-auto px-4 py-8">
@@ -14,21 +9,21 @@ const CustomerFooter = () => {
           <ul className="flex flex-wrap justify-center items-center gap-6 text-sm">
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-              <button onClick={() => router.push('/customer-catalog')} className="text-white hover:text-gray-300 transition-colors cursor-pointer">
+              <Link href="/TermsofService" className="text-white hover:text-gray-300 transition-colors">
                 Terms of Service
-              </button>
+              </Link>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-              <button onClick={() => router.push('/customer-catalog')} className="text-white hover:text-gray-300 transition-colors cursor-pointer">
+              <Link href="/catalog" className="text-white hover:text-gray-300 transition-colors">
                 Browse Catalog
-              </button>
+              </Link>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-              <button onClick={() => router.push('/customer-catalog')} className="text-white hover:text-gray-300 transition-colors cursor-pointer">
+              <Link href="/privacy-policy" className="text-white hover:text-gray-300 transition-colors">
                 Privacy Policy
-              </button>
+              </Link>
             </li>
           </ul>
         </div>

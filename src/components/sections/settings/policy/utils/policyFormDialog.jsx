@@ -26,14 +26,14 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
       maxBooksAllowed: "",
       loanPeriodDays: "",
       finePerDay: "$ 0.0",
-      maxRenewals: "",
+      maxRenewalPerBook: "",
       active: 0,
     },
   });
 
   const { mutateAsync: policyCreate } = useReportPolicyCreate();
   const { mutateAsync: policyUpdate } = useReportPolicyUpdate();
-  const { showSuccessToast, setFieldError } = useErrorHandler(setError);
+  const { showSuccessToast, showErrorToast, setFieldError } = useErrorHandler(setError);
 
   useEffect(() => {
     if (isOpen && policyData) {
@@ -76,11 +76,15 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
       const response = isEditMode
         ? await policyUpdate({ ...payload, policyId: policyData?.policyId || id })
         : await policyCreate(payload);
-      showSuccessToast(response.message);
+      const successMsg = (typeof response?.data === "string" ? response.data : null)
+        || response?.message
+        || (isEditMode ? "Policy updated successfully" : "Policy created successfully");
+      showSuccessToast(successMsg);
       handleCancel();
       router.refresh();
     } catch (error) {
       setFieldError(error);
+      showErrorToast(error);
     }
   };
 

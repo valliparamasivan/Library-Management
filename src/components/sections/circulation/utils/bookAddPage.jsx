@@ -41,7 +41,7 @@ const BookAddPage = () => {
           year: book.year,
           totalCopies: book.totalCopies ?? 0,
           issuedCopies: book.issuedCopies ?? 0,
-          availableCopies: book.availableCopies ?? 0,
+          availableCopies: ((book.totalCopies ?? 0) - (book.issuedCopies ?? 0)),
           bookImageUrl: book.bookImageUrl,
         })),
       });

@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import bookImage from "@/assets/image/book.png";
 import CheckoutConfirmDialog from "./utils/checkoutConfirmDialog";
 import SuccessDialog from "./utils/successDialog";
-import { useSearchBookOrUser, useIssueBook, useScanBook } from "@/store/hooks/CirculationHooks";
+import { useSearchBookOrUser, useIssueBook, useScanBook, useScanUser } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
 const BARCODE_BARS = [2, 1, 2, 3, 1, 2, 1, 2, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2];
@@ -34,6 +34,7 @@ const CheckoutSection = () => {
   const userIdParam = searchParams.get("userId");
 
   const { mutateAsync: searchUserApi, isPending: isLoadingUser } = useSearchBookOrUser();
+  const { mutateAsync: scanUserApi } = useScanUser();
   const { mutateAsync: issueBookApi, isPending: isIssuingBook } = useIssueBook();
   const { mutateAsync: scanBookApi, isPending: isScanning } = useScanBook();
   const { showErrorToast } = useErrorHandler();
@@ -48,11 +49,11 @@ const CheckoutSection = () => {
   useEffect(() => {
     if (userIdParam) {
       searchUserApi({ type: 1, searchKey: userIdParam })
-        .then((response) => {
+        .then(async (response) => {
           const users = response?.data || [];
           const found = users[0];
           if (found) {
-            setUser({
+            const userData = {
               internalUserId: found.internalUserId,
               userName: found.userName,
               email: found.email,
@@ -62,7 +63,26 @@ const CheckoutSection = () => {
               maxBooks: "-",
               issued: String(found.bookIssuedCount || 0).padStart(2, "0"),
               pendingFine: "-",
-            });
+            };
+            setUser(userData);
+            try {
+              const scanRes = await scanUserApi({ userId: found.userId });
+              const scan = scanRes?.data;
+              if (scan) {
+                setUser((prev) => ({
+                  ...prev,
+                  userName: scan.firstName || prev.userName,
+                  email: scan.email || prev.email,
+                  phone: scan.phoneNumber || prev.phone,
+                  policy: scan.policyName || prev.policy,
+                  maxBooks: scan.maxAllowedBooks != null ? String(scan.maxAllowedBooks) : "-",
+                  issued: String(scan.issuedBooksCount || 0).padStart(2, "0"),
+                  pendingFine: scan.fineAmount != null ? `₹ ${scan.fineAmount}` : "₹ 0",
+                }));
+              }
+            } catch {
+              // scan user failed — keep basic details
+            }
           }
         })
         .catch((error) => showErrorToast(error));
@@ -108,6 +128,24 @@ const CheckoutSection = () => {
       // fallback if sessionStorage fails
     }
   }, []);
+
+  // Auto-scan books to get due dates when user and items are ready
+  useEffect(() => {
+    if (user?.internalUserId && checkoutItems.length > 0 && checkoutItems.some((item) => item.dueDate === "-")) {
+      const rfids = checkoutItems.map((item) => item.refId);
+      scanBookApi({ type: 1, rfids, userId: String(user.internalUserId) })
+        .then((response) => {
+          const scannedBooks = response?.data || [];
+          setCheckoutItems((prev) =>
+            prev.map((item) => {
+              const matched = scannedBooks.find((b) => b.rfid === item.refId || b.isbn === item.refId);
+              return matched ? { ...item, dueDate: matched.dueDate || item.dueDate } : item;
+            })
+          );
+        })
+        .catch(() => {});
+    }
+  }, [user?.internalUserId, checkoutItems.length]);
 
   const handleCheckoutAll = async () => {
     try {

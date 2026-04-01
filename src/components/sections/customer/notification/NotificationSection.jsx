@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, Bell, Clock, BookOpen, CheckCircle2, Trash2, CircleAlert, Sparkles, CircleCheckBig } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useCustomerNotifications,
   useMarkNotificationRead,
@@ -92,28 +91,28 @@ const NotificationSection = () => {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 border border-gray-200 rounded-lg p-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
-            <TabsList className="flex gap-2 bg-transparent p-0 h-auto">
-              <TabsTrigger
-                value="all"
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "all"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                All ({allCount})
-              </TabsTrigger>
-              <TabsTrigger
-                value="unread"
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "unread"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                Unread ({unreadCount})
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "all"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All ({allCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("unread")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "unread"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Unread ({unreadCount})
+            </button>
+          </div>
 
           <div className="flex items-center gap-4">
             <button
