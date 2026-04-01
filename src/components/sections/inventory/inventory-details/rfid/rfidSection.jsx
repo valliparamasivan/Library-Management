@@ -113,6 +113,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                 statusValue: item.status,
                 sectionName: item.sectionName || "-",
                 locationName: item.locationName || "-",
+                rfidId: item.rfidId,
                 sectionId: item.sectionId ?? item.locationId,
                 shelfId: item.shelfId,
                 rowId: item.rowId,
@@ -157,8 +158,10 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
         }
     };
 
+    const [printingRecord, setPrintingRecord] = useState(null);
     const handlePrintRfid = (record) => {
         setPrintingRfidId(record.rfidTagId || "");
+        setPrintingRecord(record);
         setIsPrintRfidTagDialogOpen(true);
     };
 
@@ -319,6 +322,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                         <>
                             <ButtonWidget
                                 onClick={() => handleReprintRfid(record)}
+                                loader={false}
                                 className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
                                 title="Refresh"
                             >
@@ -333,37 +337,37 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                             </ButtonWidget>
                         </>
                     )}
-                    {(record.status === "Printed Unmapped" || record.status === "Untagged") && (
+                    {record.status === "Untagged" && (
+                        <ButtonWidget
+                            onClick={() => handlePrintRfid(record)}
+                            loader={false}
+                            className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
+                            title="Print"
+                        >
+                            <Printer className="w-4 h-4 text-[#E77B33]" />
+                        </ButtonWidget>
+                    )}
+                    {record.status === "Printed Unmapped" && (
                         <>
-                            {record.status === "Printed Unmapped" && (
-                                <>
-                                    <ButtonWidget
-                                        onClick={() => handleReprintRfid(record)}
-                                        className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
-                                        title="Refresh"
-                                    >
-                                        <RotateCw className="w-4 h-4 text-[#4CAF50]" />
-                                    </ButtonWidget>
-                                    <ButtonWidget
-                                        onClick={() => handleTagRfid(record)}
-                                        className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
-                                        title="Tag RFID"
-                                    >
-                                        <Tag className="w-4 h-4 text-[#00796B]" />
-                                    </ButtonWidget>
-                                </>
-                            )}
-                            {record.status === "Untagged" && (
-                                <ButtonWidget
-                                    onClick={() => handlePrintRfid(record)}
-                                    className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
-                                    title="Print"
-                                >
-                                    <Printer className="w-4 h-4 text-[#E77B33]" />
-                                </ButtonWidget>
-                            )}
+                            <ButtonWidget
+                                onClick={() => handleReprintRfid(record)}
+                                loader={false}
+                                className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
+                                title="Reprint"
+                            >
+                                <RotateCw className="w-4 h-4 text-[#4CAF50]" />
+                            </ButtonWidget>
+                            <ButtonWidget
+                                onClick={() => handleTagRfid(record)}
+                                loader={false}
+                                className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
+                                title="Tag RFID"
+                            >
+                                <Tag className="w-4 h-4 text-[#00796B]" />
+                            </ButtonWidget>
                             <ButtonWidget
                                 onClick={() => handleLocation(record)}
+                                loader={false}
                                 className="h-8 w-8 p-0 rounded-md bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center"
                                 title="Assign Location"
                             >
@@ -483,6 +487,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                     onOpenChange={handleReprintDialogOpenChange}
                     currentRfid={reprintingRecord?.rfidTagId || ""}
                     newRfid={reprintingRecord?.rfidTagId || ""}
+                    rfidId={reprintingRecord?.rfidId}
                 />
 
                 <TagRfid
@@ -500,6 +505,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                     isOpen={isPrintRfidTagDialogOpen}
                     onOpenChange={setIsPrintRfidTagDialogOpen}
                     rfidTagId={printingRfidId}
+                    rfidId={printingRecord?.rfidId}
                 />
             </div>
         </PageLayout>

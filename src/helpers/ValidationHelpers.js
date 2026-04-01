@@ -39,7 +39,11 @@ export const BookInventorySchema = z.object({
 });
 
 export const RoleFormSchema = z.object({
-  roleName: z.string().min(1, "Role Name is required"),
+  roleName: z
+    .string()
+    .min(1, "Role Name is required")
+    .regex(/^[A-Za-z\s]+$/, "Role Name must contain letters only"),
+  status: z.union([z.boolean(), z.number()]).optional(),
   viewDashboard: z.boolean().optional(),
   viewBooks: z.boolean().optional(),
   addBook: z.boolean().optional(),
@@ -72,7 +76,10 @@ export const RoleFormSchema = z.object({
 });
 
 export const PolicyFormSchema = z.object({
-  policyName: z.string().min(1, "Policy Name is required"),
+  policyName: z
+    .string()
+    .min(1, "Policy Name is required")
+    .regex(/^[A-Za-z\s]+$/, "Policy Name must contain letters only"),
   maxBooksAllowed: z.union([z.string(), z.number()]).refine((val) => {
     const numVal = typeof val === 'string' ? parseFloat(val) : val;
     return !isNaN(numVal) && numVal > 0;
@@ -92,21 +99,30 @@ export const PolicyFormSchema = z.object({
     const numVal = typeof val === 'string' ? parseFloat(val) : val;
     return !isNaN(numVal) && numVal > 0;
   }, "Maximum Renewals is required"),
-  active: z.number().optional(),
+  active: z.union([z.boolean(), z.number()]).optional(),
 });
 
 
 export const LocationFormSchema = z.object({
-  section: z.string().min(1, "Section is required"),
-  shelf: z.string().min(1, "Shelf is required"),
-  row: z.string().min(1, "Row is required"),
-  status: z.number().optional(),
+  section: z
+    .string()
+    .min(1, "Section is required")
+    .regex(/^[A-Za-z\s]+$/, "Section Name must contain letters only"),
+  shelf: z
+    .string()
+    .min(1, "Shelf is required")
+    .regex(/^\d+$/, "Shelf must be a number"),
+  row: z
+    .string()
+    .min(1, "Row is required")
+    .regex(/^\d+$/, "Row must be a number"),
+  status: z.union([z.boolean(), z.number()]).optional(),
 });
 
 export const UserFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Please enter a valid email address"),
-  mobile: z.string().min(1, "Mobile is required"),
+  mobile: z.string().min(1, "Mobile is required").regex(/^[0-9]+$/, "Mobile must contain only numbers"),
   policy: z.string().min(1, "Policy is required"),
   profileImage: z.any().optional(),
 });
@@ -123,11 +139,8 @@ export const EmployeeFormSchema = z.object({
   mobile: z.string().min(1, "Mobile is required").regex(/^[0-9]{10}$/, "Mobile must be 10 digits"),
   role: z.string().min(1, "Role is required"),
   profileImage: z.any().optional(),
-  createPassword: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(1, "Confirm Password is required"),
-}).refine((data) => data.confirmPassword === data.createPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
+  createPassword: z.string().optional(),
+  confirmPassword: z.string().optional(),
 });
 
 export const CategoryFormSchema = z.object({

@@ -4,14 +4,12 @@ import { useRouter } from 'nextjs-toploader/app';
 import { Button } from '@/components/ui/button';
 import { Clock, ArrowRight, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-import { borrowedBooks } from '../utils/dashboardData';
-
 const OverviewTab = ({ overviewList }) => {
-  console.log(overviewList,"overviewList");
   const router = useRouter();
+  const books = overviewList?.data?.content || overviewList || [];
 
-  const overdueBooks = borrowedBooks.filter(book => book.isOverdue);
-  const dueBooks = borrowedBooks.filter(book => !book.isOverdue && book.daysUntilDue && book.daysUntilDue > 0 && book.daysUntilDue <= 7);
+  const overdueBooks = books.filter(book => book.isOverdue);
+  const dueBooks = books.filter(book => !book.isOverdue && book.daysUntilDue && book.daysUntilDue > 0 && book.daysUntilDue <= 7);
 
   return (
     <div className="space-y-4 md:space-y-6 mt-6">

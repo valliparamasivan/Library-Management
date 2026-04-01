@@ -24,10 +24,10 @@ const UserTransactionFilter = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentStatus = searchParams.get("type") || "";
+  const currentStatus = searchParams.get("statusType") || "";
 
   const handleFilterChange = (value) => {
-    const filterUpdates = { type: value };
+    const filterUpdates = { statusType: value };
     const newParamsString = preserveFiltersInURL(searchParams, filterUpdates);
     const params = new URLSearchParams(newParamsString);
     params.delete("pageNumber");
@@ -50,7 +50,7 @@ const UserTransactionFilter = () => {
           className="h-9 px-3 rounded-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm flex items-center gap-2"
         >
           <Filter className="w-4 h-4 text-[#00796B]" />
-          <span>Filter</span>
+          <span>{FILTER_OPTIONS.find(o => o.value === currentStatus)?.label || "All"}</span>
           <ChevronDown className="w-4 h-4 text-gray-500 font-normal" />
         </ButtonWidget>
       </PopoverTrigger>

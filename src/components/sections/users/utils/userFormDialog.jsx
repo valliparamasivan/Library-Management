@@ -16,15 +16,8 @@ import { useCreateUser } from "@/store/hooks/UserHooks";
 const UserDialog = ({ isOpen, onOpenChange, id, policyDropdown }) => {
   const router = useRouter();
   const { mutateAsync: submitUser, isPending } = useCreateUser();
-  const { showSuccessToast, showErrorToast } = useErrorHandler();
 
-  const policyOptions =
-    policyDropdown?.data?.map((item) => ({
-      value: String(item.policyId),
-      label: item.policyName,
-    })) || [];
-
-  const { control, handleSubmit, reset } = useForm({
+  const { control, handleSubmit, reset, setError } = useForm({
     resolver: zodResolver(UserFormSchema),
     defaultValues: {
       name: "",
@@ -34,6 +27,14 @@ const UserDialog = ({ isOpen, onOpenChange, id, policyDropdown }) => {
       policy: "",
     },
   });
+
+  const { showSuccessToast, showErrorToast } = useErrorHandler(setError);
+
+  const policyOptions =
+    policyDropdown?.data?.map((item) => ({
+      value: String(item.policyId),
+      label: item.policyName,
+    })) || [];
 
   const onSubmit = async (data) => {
     try {
@@ -54,7 +55,18 @@ const UserDialog = ({ isOpen, onOpenChange, id, policyDropdown }) => {
       onOpenChange(false);
       router.refresh();
     } catch (error) {
-      showErrorToast(error?.data?.message ?? error?.message ?? "Could not save user");
+      const errData = error?.data || error?.response?.data || error;
+      const fieldErrors = errData?.errorMessages;
+      if (fieldErrors) {
+        const fieldMap = { email: "email", userName: "name", phoneNumber: "mobile", policyId: "policy" };
+        Object.entries(fieldErrors).forEach(([key, messages]) => {
+          const formField = fieldMap[key] || key;
+          if (messages?.[0]) setError(formField, { type: "server", message: messages[0] });
+        });
+        showErrorToast(Object.values(fieldErrors).flat()[0] || errData?.message);
+      } else {
+        showErrorToast(errData?.message ?? error?.message ?? "Could not save user");
+      }
     }
   };
 
@@ -164,6 +176,9 @@ const UserDialog = ({ isOpen, onOpenChange, id, policyDropdown }) => {
                     label="Mobile No"
                     placeholder="Enter Mobile No"
                     required
+                    type="tel"
+                    inputMode="numeric"
+                    onKeyDown={(e) => { if (!/[0-9]/.test(e.key) && !["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End"].includes(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault(); }}
                   />
                   <FormSelect
                     control={control}
@@ -183,6 +198,7 @@ const UserDialog = ({ isOpen, onOpenChange, id, policyDropdown }) => {
               type="button"
               onClick={handleCancel}
               disabled={isPending}
+              loader={false}
               className="w-full sm:flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md"
             >
               Cancel
@@ -190,7 +206,7 @@ const UserDialog = ({ isOpen, onOpenChange, id, policyDropdown }) => {
             <ButtonWidget
               type="submit"
               disabled={isPending}
-              loading={isPending}
+              loader={isPending}
               className="w-full sm:flex-1 bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-md border-0"
             >
               {id ? "Update" : "Save"}

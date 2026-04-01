@@ -52,8 +52,7 @@ console.log(bookData, "bookData");
       showSuccessToast(response.data);
       onOpenChange(false);
     } catch (error) {
-      showErrorToast(error?.data?.message);
-      onOpenChange(false);
+      showErrorToast(error?.data?.message || error?.response?.data?.message || "Reservation failed");
     }
   };
 

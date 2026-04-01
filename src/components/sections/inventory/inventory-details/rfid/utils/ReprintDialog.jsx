@@ -3,27 +3,34 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import FormSelect from "@/components/form/FormSelect";
 import BarcodeDisplay from "./BarcodeDisplay";
+import { useReprintRfid } from "@/store/hooks/InventoryHooks";
+import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
 const ReprintDialog = ({
     isOpen,
     onOpenChange,
-    currentRfid = "K1L2M3N4O5",
-    newRfid: initialNewRfid = "K1L2M3N4O5",
+    currentRfid = "",
+    newRfid: initialNewRfid = "",
+    rfidId,
 }) => {
+    const router = useRouter();
+    const printRef = useRef(null);
     const [newRfid, setNewRfid] = useState("");
     const { control, watch, reset } = useForm({
         defaultValues: {
             reason: "",
         },
     });
+    const { mutateAsync: reprintRfidApi, isPending } = useReprintRfid();
+    const { showSuccessToast, showErrorToast } = useErrorHandler();
 
     const selectedReason = watch("reason");
 
-    // Generate a new RFID code
     const generateNewRfid = () => {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         let result = "";
@@ -42,7 +49,6 @@ const ReprintDialog = ({
 
     useEffect(() => {
         if (selectedReason) {
-            // Generate new RFID when reason is selected
             setNewRfid(generateNewRfid());
         }
     }, [selectedReason]);
@@ -53,8 +59,40 @@ const ReprintDialog = ({
         onOpenChange(false);
     };
 
-    const handlePrint = () => {
-        // Wire to actual print logic
+    const handlePrint = async () => {
+        if (!selectedReason) return;
+
+        // Trigger browser print
+        if (printRef.current) {
+            const printWindow = window.open("", "_blank", "width=400,height=300");
+            if (printWindow) {
+                printWindow.document.write(`
+                    <html>
+                    <head><title>Re-Print RFID Tag</title></head>
+                    <body style="display:flex;align-items:center;justify-content:center;margin:0;padding:20px;">
+                        ${printRef.current.innerHTML}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
+            }
+        }
+
+        // Call reprint API to update status
+        if (rfidId) {
+            try {
+                const reasonLabel = reasonOptions.find((o) => o.value === selectedReason)?.label || selectedReason;
+                const response = await reprintRfidApi({ rfidId, reason: reasonLabel });
+                showSuccessToast(response?.message || "RFID reprinted successfully");
+                router.refresh();
+            } catch (error) {
+                showErrorToast(error?.data?.message || error?.message || "Failed to reprint RFID");
+            }
+        }
+
         handleClose();
     };
 
@@ -112,19 +150,16 @@ const ReprintDialog = ({
                         label="Reason"
                         placeholder="Select Reason"
                         options={reasonOptions}
-                     
                     />
                     {selectedReason && (
-                        <>
-                            <div className="space-y-1">
-                                <label className="text-sm text-gray-500 font-medium">
-                                    New RFID
-                                </label>
-                                <div className="flex flex-col items-center justify-center py-2">
-                                    <BarcodeDisplay value={currentRfid} />
-                                </div>
+                        <div className="space-y-1">
+                            <label className="text-sm text-gray-500 font-medium">
+                                New RFID
+                            </label>
+                            <div ref={printRef} className="flex flex-col items-center justify-center py-2">
+                                <BarcodeDisplay value={currentRfid} />
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
 
@@ -133,12 +168,15 @@ const ReprintDialog = ({
                     <ButtonWidget
                         className="w-full sm:flex-1 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-md"
                         onClick={handleClose}
+                        loading={false}
                     >
                         Cancel
                     </ButtonWidget>
                     <ButtonWidget
                         className="w-full sm:flex-1 bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-md border-0"
                         onClick={handlePrint}
+                        loader={isPending}
+                        disabled={isPending || !selectedReason}
                     >
                         Print
                     </ButtonWidget>

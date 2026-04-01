@@ -239,7 +239,7 @@ const UserSection = ({ response: apiResponse, policyDropdown }) => {
       render: (record) => <span className="text-sm text-gray-700">{record.email}</span>,
     },
     {
-      key: "policy",
+      key: "policyType",
       label: "Policy",
       sortable: true,
       render: (record) => <span className="text-sm text-gray-700">{record.policy}</span>,

@@ -115,7 +115,7 @@ const FormSelect = ({
               )}
             </div>
             {(error || fieldState.error) && (
-              <p className="font-medium text-red-600 relative mt-1 text-xs">
+              <p className="font-medium text-red-600 relative mt-1 text-xs ms-4">
                 {error || fieldState.error?.message}
               </p>
             )}

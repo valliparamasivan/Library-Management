@@ -25,7 +25,7 @@ const CategoryDialog = ({ isOpen, onOpenChange, id, categoryData }) => {
   });
 
   const { mutateAsync: bookCategoryCreate } = useBookCategoryCreate();
-  const { showSuccessToast, setFieldError } = useErrorHandler(setError);
+  const { showSuccessToast, showErrorToast, setFieldError } = useErrorHandler(setError);
 
   useEffect(() => {
     if (isOpen && categoryData) {
@@ -46,13 +46,22 @@ const CategoryDialog = ({ isOpen, onOpenChange, id, categoryData }) => {
         category: data.category,
         status: true,
       };
-      
+
       const response = await bookCategoryCreate(payload);
       showSuccessToast(response.message);
       handleCancel();
       router.refresh();
     } catch (error) {
-      setFieldError(error);
+      const errData = error?.data || error?.response?.data || error;
+      const fieldErrors = errData?.errorMessages;
+      if (fieldErrors) {
+        const firstKey = Object.keys(fieldErrors)[0];
+        if (firstKey) setError("category", { type: "server", message: fieldErrors[firstKey][0] });
+      } else {
+        setFieldError(error);
+      }
+      const msg = fieldErrors ? Object.values(fieldErrors).flat()[0] : errData?.message;
+      if (msg) showErrorToast(msg);
     }
   };
 

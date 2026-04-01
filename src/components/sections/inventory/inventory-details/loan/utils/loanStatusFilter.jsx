@@ -16,18 +16,18 @@ const LoanStatusFilter = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const statusParam = searchParams.get("status");
-    const currentFilter = statusParam || "all-status";
+    const typeParam = searchParams.get("type");
+    const currentFilter = typeParam === null ? 1 : parseInt(typeParam, 10);
 
     const filterOptions = [
-        { label: "All Status", value: "all-status" },
-        { label: "Checked-Out", value: "Checked-Out" },
-        { label: "Renewed", value: "Renewed" },
-        { label: "Overdue", value: "Overdue" }
+        { label: "All Status", value: 1 },
+        { label: "Checked-Out", value: 2 },
+        { label: "Renewed", value: 3 },
+        { label: "Overdue", value: 4 }
     ];
 
     const handleFilterChange = (value) => {
-        const filterUpdates = { status: value === "all-status" ? "" : value };
+        const filterUpdates = { type: value };
         const newParamsString = preserveFiltersInURL(searchParams, filterUpdates);
         const newUrl = `${window.location.pathname}?${newParamsString}`;
 
@@ -47,7 +47,7 @@ const LoanStatusFilter = () => {
                     className="h-9 px-3 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 flex items-center gap-2 flex-shrink-0"
                 >
                     <Filter className="w-4 h-4 text-[#00796B]" />
-                    <span className="text-sm">Status</span>
+                    <span className="text-sm">{filterOptions.find(o => o.value === currentFilter)?.label || "All Status"}</span>
                     <ChevronDown className="w-4 h-4 text-gray-500" />
                 </ButtonWidget>
             </PopoverTrigger>

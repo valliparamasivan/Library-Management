@@ -82,7 +82,7 @@ export async function getLoanList(searchParams) {
 }
 
 export async function getBookList(searchParams) {
-  return getList("/books/book-list", "", searchParams);
+  return getList("/books/book-list", "title", { sortOrder: "asc", ...searchParams });
 }
 
 export async function getBookDetailsById(id) {
@@ -103,7 +103,13 @@ export async function getBookCopies(bookId, searchParams) {
 }
 
 export async function getUserList(searchParams) {
-  return getList("/user/list", "internalUserId", searchParams);
+  const { startDate, endDate, sortOrder, ...rest } = searchParams;
+  return getList("/user/list", "internalUserId", {
+    ...rest,
+    ...(startDate ? { fromDate: startDate } : {}),
+    ...(endDate ? { toDate: endDate } : {}),
+    sortMethod: sortOrder || "desc",
+  });
 }
 
 export async function getUserDetailsById(id) {
@@ -116,7 +122,15 @@ export async function getUserDetailsById(id) {
 }
 
 export async function getUserTransactions(id, searchParams) {
-  return getList("/user/transactions", "cl.circulation_log_id", { ...searchParams, internalUserId: id });
+  const { startDate, endDate, sortOrder, statusType, dateType, ...rest } = searchParams;
+  return getList("/user/transactions", "cl.circulation_log_id", {
+    ...rest,
+    internalUserId: id,
+    ...(startDate ? { fromDate: startDate } : {}),
+    ...(endDate ? { toDate: endDate } : {}),
+    ...(statusType ? { type: statusType } : {}),
+    sortMethod: sortOrder || "desc",
+  });
 }
 
 export async function getAssetDetailsById(assetUuid) {

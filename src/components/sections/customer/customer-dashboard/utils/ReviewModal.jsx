@@ -142,7 +142,7 @@ const ReviewModal = ({ open, onOpenChange, book, onSubmit, isLoading = false }) 
                     <button
                       key={star}
                       type="button"
-                      onClick={() => setRating(star)}
+                      onClick={() => { setRating(star); setErrors(prev => ({ ...prev, rating: undefined })); }}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
                       className="group p-0.5 hover:scale-110 transition-transform"
@@ -189,7 +189,7 @@ const ReviewModal = ({ open, onOpenChange, book, onSubmit, isLoading = false }) 
               <textarea
                 id="review-comment"
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => { setComment(e.target.value); setErrors(prev => ({ ...prev, comment: undefined })); }}
                 placeholder="Share your thoughts about this book... What did you like? What could be better?"
                 rows={4}
                 className={cn(

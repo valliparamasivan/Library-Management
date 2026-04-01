@@ -60,11 +60,21 @@ const ActivitylogSection = ({response}) => {
             },
     });
 
+    const getUniqueRows = () => {
+        const seen = new Set();
+        return (response?.data?.content || []).filter((item) => {
+            if (seen.has(item.activityLogId)) return false;
+            seen.add(item.activityLogId);
+            return true;
+        });
+    };
+    const uniqueContent = getUniqueRows();
+
     const handleSelectAll = () => {
         if (selectAll) {
             setSelectedRows([]);
         } else {
-            setSelectedRows(response.data.content.map((item) => item.activityLogId));
+            setSelectedRows(uniqueContent.map((item) => item.activityLogId));
         }
         setSelectAll(!selectAll);
     };
@@ -76,7 +86,7 @@ const ActivitylogSection = ({response}) => {
         } else {
             const newSelected = [...selectedRows, id];
             setSelectedRows(newSelected);
-            setSelectAll(newSelected.length === response.data.content.length);
+            setSelectAll(newSelected.length === uniqueContent.length);
         }
     };
 
@@ -118,6 +128,14 @@ const ActivitylogSection = ({response}) => {
             sortable: true,
             minWidth: "150px",
             lgMinWidth: "180px",
+            render: (record) => {
+                if (!record.dateTime) return "—";
+                try {
+                    return new Date(record.dateTime).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+                } catch {
+                    return record.dateTime;
+                }
+            },
         },
         {
             key: "bookTitle",
@@ -205,7 +223,7 @@ const ActivitylogSection = ({response}) => {
                             successMessage="Activity log report exported successfully!"
                             loading={isExporting}
                             requireSelection={false}
-                            keyName="selectedIds"
+                            keyName="ids"
                             moduleType={4}
                             downloadType={3}
                             className="h-9 px-3"
@@ -215,7 +233,7 @@ const ActivitylogSection = ({response}) => {
             </div>
             <TableWidget
                 columns={defaultColumns}
-                response={response}
+                response={response?.data ? { ...response, data: { ...response.data, content: uniqueContent } } : response}
                 handleSort={handleSort}
                 getSortIcon={getSortIcon}
                 searchTerm={searchTerm}

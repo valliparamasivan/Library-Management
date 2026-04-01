@@ -244,7 +244,7 @@ const InventorySection = ({response}) => {
               successMessage="Inventory report exported successfully!"
               loading={isExporting}
               requireSelection={false}
-              keyName="selectedIds"
+              keyName="ids"
               moduleType={3}
               downloadType={3}
               className="h-9 px-3"

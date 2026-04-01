@@ -205,7 +205,7 @@ const InventoryDialog = ({ isOpen, onOpenChange, id, bookData, languages, bookCa
         bookCategory: bookData.bookCategoryId ? String(bookData.bookCategoryId) : "",
         bookType: bookData.bookTypeId ? String(bookData.bookTypeId) : "",
         publisher: bookData.publisher || "",
-        year: bookData.year || bookData.yearPublished || "",
+        year: bookData.year || bookData.yearPublished || bookData.publishedYear || "",
       });
     } else if (isOpen && !id) {
       setBookCount(1);
@@ -225,7 +225,8 @@ const InventoryDialog = ({ isOpen, onOpenChange, id, bookData, languages, bookCa
         year: "",
       });
     }
-  }, [isOpen, id, bookData, languages, reset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, id, bookData, reset]);
 
   return (
     <>

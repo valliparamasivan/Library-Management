@@ -12,6 +12,8 @@ import { getLoanActionTypeColor } from '@/helpers/FuntionalHelpers';
 import { ArrowLeft, Book, Calendar, FileText, Info, RefreshCw, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
+import { useReturnBook, useRenewBook } from '@/store/hooks/CirculationHooks';
+import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import InventoryDetailsNavigation from '../utils/inventoryDetailsNavigation';
 import ReturnDialog from './utils/returnDialog';
 import RenewDialog from './utils/renewDialog';
@@ -24,8 +26,11 @@ import TransferSuccessDialog from '@/components/sections/inventory/inventory-det
 import RenewSuccessDialog from '@/components/sections/inventory/inventory-details/loan/utils/RenewSuccessPopup';
 
 
-const LoanSection = ({ slug, loansResponse }) => {
+const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
     const router = useRouter();
+    const { mutateAsync: returnBookApi } = useReturnBook();
+    const { mutateAsync: renewBookApi } = useRenewBook();
+    const { showErrorToast } = useErrorHandler();
     const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
     const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
     const [isTransferSuccessOpen, setIsTransferSuccessOpen] = useState(false);
@@ -38,16 +43,42 @@ const LoanSection = ({ slug, loansResponse }) => {
     const [isRenewalHistoryDialogOpen, setIsRenewalHistoryDialogOpen] = useState(false);
     const [selectedRenewalHistory, setSelectedRenewalHistory] = useState([]);
 
-    const handleTransferConfirm = () => {
-        console.log('Return/Check-in confirmed for:', selectedBookData);
-        setIsTransferDialogOpen(false);
-        setIsTransferSuccessOpen(true);
+    const extractErrorMessage = (error, fallback) => {
+        const errData = error?.data || error?.response?.data;
+        const fieldErrors = errData?.errorMessages;
+        if (fieldErrors) {
+            const firstMsg = Object.values(fieldErrors).flat().filter(Boolean)[0];
+            if (firstMsg) return firstMsg;
+        }
+        return errData?.message || error?.message || fallback;
     };
 
-    const handleRenewConfirm = () => {
-        console.log('Renew confirmed for:', selectedBookData);
-        setIsRenewBookDueDateDialogOpen(false);
-        setIsRenewSuccessDialogOpen(true);
+    const handleTransferConfirm = async () => {
+        try {
+            await returnBookApi({
+                userId: String(selectedBookData?.internalUserId),
+                rfidList: [selectedBookData?.rfid],
+            });
+            setIsTransferDialogOpen(false);
+            setIsTransferSuccessOpen(true);
+            router.refresh();
+        } catch (error) {
+            showErrorToast(extractErrorMessage(error, "Check-in failed"));
+        }
+    };
+
+    const handleRenewConfirm = async () => {
+        try {
+            await renewBookApi({
+                userId: String(selectedBookData?.internalUserId),
+                rfidList: [selectedBookData?.rfid],
+            });
+            setIsRenewBookDueDateDialogOpen(false);
+            setIsRenewSuccessDialogOpen(true);
+            router.refresh();
+        } catch (error) {
+            showErrorToast(extractErrorMessage(error, "Renewal failed"));
+        }
     };
     
     const breadcrumbs = [
@@ -79,7 +110,7 @@ const LoanSection = ({ slug, loansResponse }) => {
         ],
     });
 
-    const bookTitle = "The Time Traveler";
+    const bookTitle = apiBookData?.data?.title || "Untitled";
 
     const mappedContent = useMemo(() => {
         const content = loansResponse?.data?.content ?? [];
@@ -115,6 +146,8 @@ const LoanSection = ({ slug, loansResponse }) => {
                 userId: loan?.userId ?? "",
                 fullName: loan?.userName ?? "",
                 userDetailId: loan?.userId ?? "",
+                internalUserId: loan?.internalUserId ?? "",
+                rfid: loan?.rfid ?? "",
 
                 checkOutDate: loan?.checkOutDate ?? null,
                 dueDate: loan?.dueDate ?? null,
@@ -173,7 +206,7 @@ const LoanSection = ({ slug, loansResponse }) => {
             render: (record, index) => String(currentPage * itemsPerPage + index + 1).padStart(2, '0'),
         },
         {
-            key: "userName",
+            key: "name",
             label: "User",
             sortable: true,
             minWidth: "150px",
@@ -287,7 +320,7 @@ const LoanSection = ({ slug, loansResponse }) => {
             ),
         },
         {
-            key: "fine",
+            key: "fineAmount",
             label: "Fine",
             sortable: true,
             minWidth: "100px",
@@ -308,13 +341,7 @@ const LoanSection = ({ slug, loansResponse }) => {
             minWidth: "120px",
             lgMinWidth: "150px",
             render: (record) => {
-                const statusMap = {
-                    "Book Issued": "Checked-Out",
-                    "Checked-out": "Checked-Out",
-                    "checked-out": "Checked-Out",
-                    "Checked-Out": "Checked-Out",
-                };
-                const displayStatus = statusMap[record.status] || record.status;
+                const displayStatus = record.status || "Unknown";
                 const statusForColor = displayStatus === "Checked-Out" ? "Checked-out" : displayStatus;
                 return (
                     <span

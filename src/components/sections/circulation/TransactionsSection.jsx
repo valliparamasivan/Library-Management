@@ -326,6 +326,8 @@ const TransactionsSection = () => {
       sortable: false,
       minWidth: "120px",
       render: (record) => {
+        const isCheckedIn = record.status === "Check-In" || record.status === "Checked-In" || record.status === "Returned";
+        if (isCheckedIn) return <span className="text-xs text-gray-400">—</span>;
         const isOverdue = record.status === "Overdue";
         return (
           <div className="flex items-center gap-1">

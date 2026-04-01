@@ -1,8 +1,6 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useState } from "react";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { errorToast, successToast } from "@/helpers/ErrorHelpers";
 
@@ -42,7 +40,6 @@ const BulkExportWidget = ({
   downloadType,
   ...props
 }) => {
-  const [open, setOpen] = useState(false);
   const hasSelectedItems = selectedItems.length > 0;
   const isDisabled =
     disabled || loading || (requireSelection && !hasSelectedItems);
@@ -58,21 +55,15 @@ const BulkExportWidget = ({
       return;
     }
 
-    setOpen(false);
-
     try {
-      const selectedIds = requireSelection
-        ? selectedItems.join(",")
-        : hasSelectedItems
-          ? selectedItems.join(",")
-          : allData.map((item) => getItemId(item)).join(",");
+      const selectedIds = hasSelectedItems ? selectedItems : [];
       const { status, fromDate, toDate, ...restParams } = params;
       const exportParams = {
         ...restParams,
         ...(status !== undefined && status !== "" && { type: status }),
         ...(fromDate !== undefined && fromDate !== "" && { startDate: fromDate }),
         ...(toDate !== undefined && toDate !== "" && { endDate: toDate }),
-        [keyName]: selectedIds || "",
+        ...(selectedIds.length > 0 ? { [keyName]: selectedIds } : {}),
         ...(moduleType !== undefined && { moduleType }),
         ...(downloadType !== undefined && { downloadType }),
       };
@@ -89,31 +80,16 @@ const BulkExportWidget = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <ButtonWidget
-          variant="outline"
-          className={`text-[#1A1A1A] text-[13.5px] font-medium rounded-md border-[#E6E6E6] ${className}`}
-          disabled={isDisabled}
-          {...props}
-        >
-          <Upload className="w-4 h-4 text-[#00796B]" />
-          {title}
-        </ButtonWidget>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-2" align="start">
-        <button
-          onClick={handleExport}
-          disabled={isDisabled || loading}
-          className="w-full flex cursor-pointer items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span>Export as Excel</span>
-          {loading && (
-            <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-          )}
-        </button>
-      </PopoverContent>
-    </Popover>
+    <ButtonWidget
+      variant="outline"
+      className={`text-[#1A1A1A] text-[13.5px] font-medium rounded-md border-[#E6E6E6] ${className}`}
+      disabled={isDisabled}
+      onClick={handleExport}
+      {...props}
+    >
+      <Upload className="w-4 h-4 text-[#00796B]" />
+      {title}
+    </ButtonWidget>
   );
 };
 

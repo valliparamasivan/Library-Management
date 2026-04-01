@@ -3,15 +3,53 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { X } from "lucide-react";
+import { useRef } from "react";
+import { useRouter } from "next/navigation";
 import BarcodeDisplay from "./BarcodeDisplay";
+import { useUpdateRfidPrintStatus } from "@/store/hooks/InventoryHooks";
+import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
-const PrintRfidTag = ({ isOpen, onOpenChange, rfidTagId }) => {
+const PrintRfidTag = ({ isOpen, onOpenChange, rfidTagId, rfidId }) => {
+    const router = useRouter();
+    const printRef = useRef(null);
+    const { mutateAsync: updatePrintStatus, isPending } = useUpdateRfidPrintStatus();
+    const { showSuccessToast, showErrorToast } = useErrorHandler();
+
     const handleClose = () => {
         onOpenChange(false);
     };
 
-    const handlePrint = () => {
-        // Wire to actual print logic
+    const handlePrint = async () => {
+        // Trigger browser print for the barcode/ZPL area
+        if (printRef.current) {
+            const printWindow = window.open("", "_blank", "width=400,height=300");
+            if (printWindow) {
+                printWindow.document.write(`
+                    <html>
+                    <head><title>Print RFID Tag</title></head>
+                    <body style="display:flex;align-items:center;justify-content:center;margin:0;padding:20px;">
+                        ${printRef.current.innerHTML}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
+            }
+        }
+
+        // Update RFID status to PRINTED_UNMAPPED via API
+        if (rfidId) {
+            try {
+                const response = await updatePrintStatus([rfidId]);
+                showSuccessToast(response?.message || "RFID status updated to Printed");
+                router.refresh();
+            } catch (error) {
+                showErrorToast(error?.data?.message || error?.message || "Failed to update RFID status");
+            }
+        }
+
         handleClose();
     };
 
@@ -35,7 +73,7 @@ const PrintRfidTag = ({ isOpen, onOpenChange, rfidTagId }) => {
                 </div>
 
                 <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8 flex flex-col items-center justify-center flex-1">
-                    <div className="w-full flex flex-col items-center justify-center">
+                    <div ref={printRef} className="w-full flex flex-col items-center justify-center">
                         <div className="transform scale-110 sm:scale-125">
                             <BarcodeDisplay value={rfidTagId} />
                         </div>
@@ -46,12 +84,15 @@ const PrintRfidTag = ({ isOpen, onOpenChange, rfidTagId }) => {
                     <ButtonWidget
                         className="w-full sm:flex-1 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-md text-sm sm:text-base py-2 sm:py-2.5"
                         onClick={handleClose}
+                        loading={false}
                     >
                         Cancel
                     </ButtonWidget>
                     <ButtonWidget
                         className="w-full sm:flex-1 bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-md border-0 text-sm sm:text-base py-2 sm:py-2.5"
                         onClick={handlePrint}
+                        loading={isPending}
+                        disabled={isPending}
                     >
                         Print Tag
                     </ButtonWidget>

@@ -18,6 +18,8 @@ const FormInput = ({
   prefix = null,
   suffix = null,
   readOnly = false,
+  inputMode,
+  onKeyDown,
 }) => {
   return (
     <div className="flex flex-col w-full">
@@ -43,6 +45,8 @@ const FormInput = ({
                 placeholder={placeholder}
                 disabled={disabled}
                 readOnly={readOnly}
+                inputMode={inputMode}
+                onKeyDown={onKeyDown}
                 className={cn(className, prefix && "pl-10", suffix && "pr-16!", (error || fieldState.invalid) && "border-red-600", readOnly && "bg-gray-100")}
               />
               {(error || fieldState.error) && <p className="font-medium text-red-600 relative mt-1 text-xs ms-4">{error || fieldState.error?.message}</p>}

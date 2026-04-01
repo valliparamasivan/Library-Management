@@ -14,21 +14,21 @@ const CustomerFooter = () => {
           <ul className="flex flex-wrap justify-center items-center gap-6 text-sm">
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-              <div className="text-white hover:text-gray-300 transition-colors">
+              <button onClick={() => router.push('/customer-catalog')} className="text-white hover:text-gray-300 transition-colors cursor-pointer">
                 Terms of Service
-              </div>
+              </button>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-              <button className="text-white hover:text-gray-300 transition-colors" >
+              <button onClick={() => router.push('/customer-catalog')} className="text-white hover:text-gray-300 transition-colors cursor-pointer">
                 Browse Catalog
               </button>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
-              <div className="text-white hover:text-gray-300 transition-colors">
+              <button onClick={() => router.push('/customer-catalog')} className="text-white hover:text-gray-300 transition-colors cursor-pointer">
                 Privacy Policy
-              </div>
+              </button>
             </li>
           </ul>
         </div>

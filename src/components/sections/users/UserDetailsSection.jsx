@@ -13,12 +13,13 @@ import FormInput from '@/components/form/FormInput';
 import FormSelect from '@/components/form/FormSelect';
 import { getUserStatusColor } from '@/helpers/FuntionalHelpers';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
-import { useUserChangeStatus, useEditUser } from '@/store/hooks/UserHooks';
+import { useUserChangeStatus, useEditUser, useSendPasswordResetMail } from '@/store/hooks/UserHooks';
 import UserDetailsNavigation from './utils/userDetailsNavigation';
 import TableWidget from '@/components/widgets/TableWidget';
 import SuccessPopupWidget from '@/components/widgets/SuccessPopupWidget';
 import useURLParams from '@/components/custom-hooks/useURLParams';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
+import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 
 const BARCODE_BARS = [2, 1, 2, 3, 1, 2, 1, 2, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2];
 
@@ -51,8 +52,9 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
   const userData = userResponse?.data || {};
 
   const user = {
-    userId: userData.internalUserId ? String(userData.internalUserId) : id,
-    libraryCardId: userData.libraryCardId || "-",
+    internalUserId: userData.internalUserId ? String(userData.internalUserId) : id,
+    userId: userData.userId || "-",
+    libraryCardId: userData.userId || "-",
     userName: userData.userName || "",
     email: userData.email || "",
     phone: userData.mobile || "",
@@ -60,7 +62,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
     policyName: userData.policyName || "",
     status: userData.status ? "Active" : "Inactive",
     statusType: userData.status ? "Active" : "Inactive",
-    joinedDate: "-",
+    joinedDate: userData.joinedDate || "-",
     profileImage: userData.profileImageUrl || null,
   };
 
@@ -68,10 +70,46 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
   const [isStatusActive, setIsStatusActive] = useState(user.status === 'Active');
   const { mutateAsync: changeUserStatus, isPending: isStatusChangePending } = useUserChangeStatus();
   const { mutateAsync: editUser, isPending: isEditingActive } = useEditUser();
+  const { mutateAsync: sendResetMail, isPending: isSendingReset } = useSendPasswordResetMail();
   const { showSuccessToast, showErrorToast } = useErrorHandler();
   const [isUserDetailsEditing, setIsUserDetailsEditing] = useState(false);
   const [isPasswordResetSuccessOpen, setIsPasswordResetSuccessOpen] = useState(false);
   const [isPrintCardSuccessOpen, setIsPrintCardSuccessOpen] = useState(false);
+  const printCardRef = useRef(null);
+
+  const handleSendPasswordReset = async () => {
+    if (!user.email) {
+      showErrorToast("User email is missing");
+      return;
+    }
+    try {
+      await sendResetMail({ email: user.email, userType: "CUST" });
+      setIsPasswordResetSuccessOpen(true);
+    } catch (error) {
+      showErrorToast(error?.data?.message || error?.message || "Failed to send password reset link");
+    }
+  };
+
+  const handlePrintCard = () => {
+    if (printCardRef.current) {
+      const printWindow = window.open("", "_blank", "width=500,height=400");
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+          <head><title>Library Card - ${user.userName}</title>
+          <style>body{display:flex;align-items:center;justify-content:center;margin:0;padding:20px;font-family:sans-serif;}</style>
+          </head>
+          <body>${printCardRef.current.innerHTML}</body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }
+    }
+    setIsPrintCardSuccessOpen(true);
+  };
 
   const {
     page: transactionsPage,
@@ -90,9 +128,10 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
       "sNo", "bookDetails", "checkOutDate", "dueDate", "checkInDate", "renewedDate", "renewalCount", "overdueDays", "fine", "status"
     ],
     additionalParams: {
-      dateFilterType: { paramName: "type", defaultValue: "" },
+      dateFilterType: { paramName: "dateType", defaultValue: "" },
       fromDate: { paramName: "startDate", defaultValue: "" },
       toDate: { paramName: "endDate", defaultValue: "" },
+      statusType: { paramName: "statusType", defaultValue: "" },
     },
   });
 
@@ -128,6 +167,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
     if (profileImageUrl) URL.revokeObjectURL(profileImageUrl);
     setProfileImageUrl(URL.createObjectURL(file));
     setProfileImageFile(file);
+    setIsUserDetailsEditing(true);
     e.target.value = '';
   };
 
@@ -255,21 +295,27 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
     data: {
       ...transactionsPageData,
       pageSize: transactionsPageData.size ?? transactionsPageData.pageSize,
-      content: transactionsPageData.content.map((tx, index) => ({
-        id: tx.circulationLogId || index,
-        sNo: String(transactionsPage * transactionsPageSize + index + 1).padStart(2, '0'),
-        bookTitle: tx.bookTitle || "-",
-        rfid: tx.rfid || tx.isbn || "-",
-        checkOutDate: tx.checkOutDate || "-",
-        dueDate: tx.dueDate || "-",
-        checkInDate: tx.checkInDate || "-",
-        renewedDate: tx.renewedDate || "-",
-        renewalCount: tx.renewalCount?.split?.("/")?.[0] ? Number(tx.renewalCount.split("/")[0]) : 0,
-        maxRenewals: tx.renewalCount?.split?.("/")?.[1] ? Number(tx.renewalCount.split("/")[1]) : 3,
-        overdueDays: tx.overdueDays != null ? tx.overdueDays : (tx.daysLeft != null ? Math.abs(Math.min(tx.daysLeft, 0)) : 0),
-        fine: (tx.fine || tx.fineAmount) > 0 ? `₹ ${tx.fine || tx.fineAmount}` : "₹ 0",
-        status: tx.statusTag || tx.status || "-",
-      })),
+      content: transactionsPageData.content.map((tx, index) => {
+        const parts = (tx.renewalCount || "0/0").split("/");
+        const renewCurrent = Number(parts[0]) || 0;
+        const renewMax = Number(parts[1]) || 0;
+        const fineAmount = Number(tx.fine || tx.fineAmount || 0);
+        return {
+          id: tx.circulationLogId || index,
+          sNo: String(transactionsPage * transactionsPageSize + index + 1).padStart(2, '0'),
+          bookTitle: tx.bookTitle || "-",
+          rfid: tx.rfid || "-",
+          checkOutDate: tx.checkOutDate || "-",
+          dueDate: tx.dueDate || "-",
+          checkInDate: tx.checkInDate || "-",
+          renewedDate: tx.renewedDate || "-",
+          renewalCount: renewCurrent,
+          maxRenewals: renewMax,
+          overdueDays: Number(tx.overdueDays || 0),
+          fine: fineAmount > 0 ? `₹ ${fineAmount}` : "₹ 0",
+          status: tx.status || "-",
+        };
+      }),
     }
   } : transactionsResponse;
 
@@ -362,7 +408,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
         <UserDetailsNavigation
           currentPage={activeTab}
           onTabChange={setActiveTab}
-          onSendPasswordReset={() => setIsPasswordResetSuccessOpen(true)}
+          onSendPasswordReset={handleSendPasswordReset}
           transactionsSearch={transactionsSearch}
           onTransactionsSearch={handleTransactionsSearch}
           transactionDateRange={transactionPickerInitialRange}
@@ -478,6 +524,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
                   <div className="flex items-center gap-3 w-full pt-4 border-t border-gray-200">
                     <ButtonWidget
                       type="button"
+                      loader={false}
                       className="flex-1 h-10 px-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                       onClick={handleCancelUserDetails}
                     >
@@ -486,7 +533,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
                     <ButtonWidget
                       type="submit"
                       disabled={isEditingActive}
-                      loading={isEditingActive}
+                      loader={isEditingActive}
                       className="flex-1 h-10 px-2 rounded-md bg-[#00796B] text-white hover:bg-[#00695C]"
                       onClick={handleSubmit(onSubmitEditUser)}
                     >
@@ -498,7 +545,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
             </div>
 
             <div className="space-y-4 md:col-span-2 xl:col-span-1 xl:col-start-4">
-              <div className="bg-gradient-to-br from-[#2196F3] to-[#4CAF50] rounded-xl p-6 text-white shadow-lg min-h-[280px] flex flex-col">
+              <div ref={printCardRef} className="bg-gradient-to-br from-[#2196F3] to-[#4CAF50] rounded-xl p-6 text-white shadow-lg min-h-[280px] flex flex-col">
                 <div className="mb-2">
                   <p className="text-xs font-medium tracking-widest opacity-90">LIBRARY CARD</p>
                 </div>
@@ -517,13 +564,14 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
                   <div className="bg-white rounded-lg px-3 py-4 text-gray-900">
                     <p className="text-xs font-medium text-center text-gray-600 mb-2">User ID</p>
                     <LibraryCardBarcode />
-                    <p className="text-sm font-semibold text-center mt-2">{user.libraryCardId}</p>
+                    <p className="text-sm font-semibold text-center mt-2">{user.userId}</p>
                   </div>
                 </div>
               </div>
               <ButtonWidget
                 className="w-full h-10 rounded-md bg-white border border-[#00796B] hover:bg-gray-50 text-gray-700 flex items-center justify-center gap-2"
-                onClick={() => setIsPrintCardSuccessOpen(true)}
+                onClick={handlePrintCard}
+                loader={false}
               >
                 <Printer className="w-4 h-4 text-[#00796B]" />
                 Print Card

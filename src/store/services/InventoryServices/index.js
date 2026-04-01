@@ -61,3 +61,24 @@ export const editLocation = async (params) => {
   const { data } = await clientAxios.put("/edit/save/location", params);
   return data;
 };
+
+export const releaseRfid = async (bookCopyId) => {
+  const { data } = await clientAxios.put("/release/rfid", null, {
+    params: { bookCopyId },
+  });
+  return data;
+};
+
+export const reprintRfid = async ({ rfidId, reason }) => {
+  const { data } = await clientAxios.put("/rfid/reprint", null, {
+    params: { rfidId, reason },
+  });
+  return data;
+};
+
+export const updateRfidPrintStatus = async (rfidIds) => {
+  const { data } = await clientAxios.put("/update/status/rfid", null, {
+    params: { rfidIds: rfidIds.join(",") },
+  });
+  return data;
+};

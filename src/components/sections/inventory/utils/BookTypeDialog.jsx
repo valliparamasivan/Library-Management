@@ -25,7 +25,7 @@ const BookTypeDialog = ({ isOpen, onOpenChange, id, bookTypeData }) => {
   });
 
   const { mutateAsync: bookTypeCreate } = useBookTypeCreate();
-  const { showSuccessToast, setFieldError } = useErrorHandler(setError);
+  const { showSuccessToast, showErrorToast, setFieldError } = useErrorHandler(setError);
 
   useEffect(() => {
     if (isOpen && bookTypeData) {
@@ -51,7 +51,15 @@ const BookTypeDialog = ({ isOpen, onOpenChange, id, bookTypeData }) => {
       handleCancel();
       router.refresh();
     } catch (error) {
-      setFieldError(error);
+      const errData = error?.data || error?.response?.data || error;
+      const fieldErrors = errData?.errorMessages;
+      if (fieldErrors?.type) {
+        setError("bookType", { type: "server", message: fieldErrors.type[0] });
+      } else {
+        setFieldError(error);
+      }
+      const msg = fieldErrors?.type?.[0] || errData?.message;
+      if (msg) showErrorToast(msg);
     }
   };
 

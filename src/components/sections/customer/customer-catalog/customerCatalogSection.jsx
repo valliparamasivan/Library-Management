@@ -33,10 +33,19 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
   const { mutateAsync: removeFavorite } = useRemoveFavorite();
   const { showSuccessToast, showErrorToast } = useErrorHandler();
   const [searchQuery, setSearchQuery] = useState(searchParams?.get('search') || searchParams?.get('searchKey') || "");
-  const [sortBy, setSortBy] = useState(searchParams?.get('sortField') || "relevance");
+  const getSortByFromParams = () => {
+    const sortField = searchParams?.get('sortField');
+    if (!sortField) return 'relevance';
+    if (sortField === 'title') return 'title';
+    if (sortField === 'author') return 'author';
+    if (sortField === 'year_published') return 'newest';
+    if (sortField === 'rating') return 'rating';
+    return 'relevance';
+  };
+  const [sortBy, setSortBy] = useState(getSortByFromParams());
   const [selectedGenre, setSelectedGenre] = useState(searchParams?.get('categoryName') || searchParams?.get('genre') || "All Books");
   const availableParam = searchParams?.get('available');
-  const [availableOnly, setAvailableOnly] = useState(availableParam === 'false' ? false : true);
+  const [availableOnly, setAvailableOnly] = useState(availableParam === 'true');
   const [selectedLanguage, setSelectedLanguage] = useState(
     searchParams?.get('language') 
       ? searchParams.get('language').split(',').filter(Boolean) 
@@ -83,7 +92,7 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
   const { control, watch, setValue, getValues } = useForm({
     defaultValues: {
       search: searchQuery || "",
-      sortBy: "relevance",
+      sortBy: sortBy,
     },
   });
 
@@ -128,7 +137,7 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
     if (watchedSortBy && watchedSortBy !== sortBy) {
       let sortField = "title";
       let sortOrder = "asc";
-      
+
       switch (watchedSortBy) {
         case "title":
           sortField = "title";
@@ -146,13 +155,14 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
           sortField = "rating";
           sortOrder = "desc";
           break;
+        case "relevance":
         default:
-          sortField = "title";
-          sortOrder = "asc";
+          sortField = null;
+          sortOrder = null;
       }
-      
+
       setSortBy(watchedSortBy);
-      updateURLParams({ sortField, sortOrder });
+      updateURLParams({ sortField, sortOrder, page: null });
     }
   }, [watchedSortBy, sortBy, updateURLParams]);
 
@@ -246,11 +256,10 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
 
   const handleFilter = () => {
     setCurrentPage(1);
-    const available = availableOnly ? 'true' : 'false';
-    updateURLParams({ 
+    updateURLParams({
       language: selectedLanguage.length > 0 ? selectedLanguage.join(',') : null,
       year: selectedYears.length > 0 ? selectedYears.join(',') : null,
-      available,
+      available: availableOnly ? 'true' : null,
       page: null
     });
     setIsFilterOpen(false);
@@ -272,7 +281,7 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
   const handleReset = () => {
     setSelectedLanguage([]);
     setSelectedYears([]);
-    setAvailableOnly(true);
+    setAvailableOnly(false);
     setSearchQuery("");
     setValue("search", "");
     setSelectedGenre("All Books");

@@ -152,6 +152,7 @@ const UserSection = ({response}) => {
       key: "policyName",
       label: "Policy",
       sortable: true,
+      render: (record) => <span className="text-sm text-gray-700">{record.policyName || "—"}</span>,
     },
     {key: "status",
       label: "Status",
@@ -204,7 +205,7 @@ const UserSection = ({response}) => {
               successMessage="User report exported successfully!"
               loading={isExporting}
               requireSelection={false}
-              keyName="selectedIds"
+              keyName="ids"
               moduleType={1}
               downloadType={3}
               className="h-9 px-3"

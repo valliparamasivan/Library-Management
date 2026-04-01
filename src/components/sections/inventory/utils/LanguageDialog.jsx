@@ -25,7 +25,7 @@ const LanguageDialog = ({ isOpen, onOpenChange, id, languageData }) => {
   });
 
   const { mutateAsync: languageCreate } = useLanguageCreate();
-  const { showSuccessToast, setFieldError } = useErrorHandler(setError);
+  const { showSuccessToast, showErrorToast, setFieldError } = useErrorHandler(setError);
 
   useEffect(() => {
     if (isOpen && languageData) {
@@ -44,13 +44,22 @@ const LanguageDialog = ({ isOpen, onOpenChange, id, languageData }) => {
       const payload = {
         language: data.language,
       };
-      
+
       const response = await languageCreate(payload);
       showSuccessToast(response.message);
       handleCancel();
       router.refresh();
     } catch (error) {
-      setFieldError(error);
+      const errData = error?.data || error?.response?.data || error;
+      const fieldErrors = errData?.errorMessages;
+      if (fieldErrors) {
+        const firstKey = Object.keys(fieldErrors)[0];
+        if (firstKey) setError("language", { type: "server", message: fieldErrors[firstKey][0] });
+      } else {
+        setFieldError(error);
+      }
+      const msg = fieldErrors ? Object.values(fieldErrors).flat()[0] : errData?.message;
+      if (msg) showErrorToast(msg);
     }
   };
 

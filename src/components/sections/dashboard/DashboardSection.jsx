@@ -17,8 +17,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import InventoryDialog from "../inventory/utils/InventoryDialog";
 import UserDialog from "../users/utils/userFormDialog";
+import { useDashboardOverview } from "@/store/hooks/DashboardHooks";
 
-const InventoryOverviewSection = () => {
+const InventoryOverviewSection = ({ data, isLoading }) => {
+  const totalBooks = data?.totalBooks ?? 0;
+  const rfidTagged = data?.rfidTagged ?? 0;
+  const rfidUntagged = data?.rfidUntagged ?? 0;
+
   return (
     <div className="bg-white rounded-lg p-4 sm:p-6 border">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
@@ -33,15 +38,15 @@ const InventoryOverviewSection = () => {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-gray-100 rounded-lg p-3 sm:p-4">
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">1,569</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{isLoading ? "..." : totalBooks.toLocaleString()}</p>
           <p className="text-xs sm:text-sm text-gray-700">Total Books</p>
         </div>
         <div className="bg-[#D0FAE5] rounded-lg p-3 sm:p-4">
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">1,420</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{isLoading ? "..." : rfidTagged.toLocaleString()}</p>
           <p className="text-xs sm:text-sm text-gray-700">RFID Tagged</p>
         </div>
         <div className="bg-[#FBE6D9] rounded-lg p-3 sm:p-4">
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">149</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{isLoading ? "..." : rfidUntagged.toLocaleString()}</p>
           <p className="text-xs sm:text-sm text-gray-700">Untagged</p>
         </div>
       </div>
@@ -49,7 +54,11 @@ const InventoryOverviewSection = () => {
   );
 };
 
-const UsersOverviewSection = () => {
+const UsersOverviewSection = ({ data, isLoading }) => {
+  const totalUsers = data?.totalUsers ?? 0;
+  const activeUsers = data?.activeUsers ?? 0;
+  const inactiveUsers = data?.inactiveUsers ?? 0;
+
   return (
     <div className="bg-white rounded-lg p-4 sm:p-6 border">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
@@ -64,15 +73,15 @@ const UsersOverviewSection = () => {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-gray-100 rounded-lg p-3 sm:p-4">
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">847</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{isLoading ? "..." : totalUsers.toLocaleString()}</p>
           <p className="text-xs sm:text-sm text-gray-700">Total Users</p>
         </div>
         <div className="bg-[#D0FAE5] rounded-lg p-3 sm:p-4">
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">153</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{isLoading ? "..." : activeUsers.toLocaleString()}</p>
           <p className="text-xs sm:text-sm text-gray-700">Active Users</p>
         </div>
         <div className="bg-[#FBE6D9] rounded-lg p-3 sm:p-4">
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">24</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{isLoading ? "..." : inactiveUsers.toLocaleString()}</p>
           <p className="text-xs sm:text-sm text-gray-700">Inactive Users</p>
         </div>
       </div>
@@ -80,42 +89,51 @@ const UsersOverviewSection = () => {
   );
 };
 
-const LoansOverviewSection = ({ control, timeRangeOptions }) => {
-  const checkedOut = 1000;
-  const checkedIn = 569;
-  const totalLoans = checkedOut + checkedIn;
-  
+const LoansOverviewSection = ({ control, timeRangeOptions, data, isLoading }) => {
+  const checkedOut = data?.checkedOut ?? 0;
+  const checkedIn = data?.checkedIn ?? 0;
+  const totalLoans = data?.totalLoans ?? (checkedOut + checkedIn);
+  const activeLoans = data?.activeLoans ?? 0;
+  const overdueLoans = data?.overdueLoans ?? 0;
+  const outstandingFine = data?.outstandingFine ?? 0;
+  const onTimeReturn = data?.onTimeReturn ?? 0;
+  const lateReturn = data?.lateReturn ?? 0;
+  const fineCollected = data?.fineCollected ?? 0;
+
   const radius = 50;
   const innerRadius = 35;
   const centerX = 50;
   const centerY = 50;
-  
-  const greenAngle = 240;
-  const orangeAngle = 120;
-  
+
+  const total = checkedOut + checkedIn || 1;
+  const greenAngle = (checkedIn / total) * 360;
+  const orangeAngle = (checkedOut / total) * 360;
+
   const checkedInStartAngle = -90;
   const checkedInEndAngle = checkedInStartAngle + greenAngle;
   const checkedOutStartAngle = checkedInEndAngle;
   const checkedOutEndAngle = checkedOutStartAngle + orangeAngle;
 
-  const createArcPath = (startAngle, endAngle, outerRadius, innerRadius) => {
+  const createArcPath = (startAngle, endAngle, outerRadius, innerRadiusVal) => {
     const startAngleRad = (startAngle * Math.PI) / 180;
     const endAngleRad = (endAngle * Math.PI) / 180;
-    
+
     const x1 = centerX + outerRadius * Math.cos(startAngleRad);
     const y1 = centerY + outerRadius * Math.sin(startAngleRad);
     const x2 = centerX + outerRadius * Math.cos(endAngleRad);
     const y2 = centerY + outerRadius * Math.sin(endAngleRad);
-    
-    const x3 = centerX + innerRadius * Math.cos(endAngleRad);
-    const y3 = centerY + innerRadius * Math.sin(endAngleRad);
-    const x4 = centerX + innerRadius * Math.cos(startAngleRad);
-    const y4 = centerY + innerRadius * Math.sin(startAngleRad);
-    
+
+    const x3 = centerX + innerRadiusVal * Math.cos(endAngleRad);
+    const y3 = centerY + innerRadiusVal * Math.sin(endAngleRad);
+    const x4 = centerX + innerRadiusVal * Math.cos(startAngleRad);
+    const y4 = centerY + innerRadiusVal * Math.sin(startAngleRad);
+
     const largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
-    
-    return `M ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+
+    return `M ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadiusVal} ${innerRadiusVal} 0 ${largeArc} 0 ${x4} ${y4} Z`;
   };
+
+  const formatCurrency = (val) => typeof val === "number" ? `₹${val.toLocaleString()}` : val;
 
   return (
     <div className="bg-white rounded-lg p-4 sm:p-6 border">
@@ -140,7 +158,7 @@ const LoansOverviewSection = ({ control, timeRangeOptions }) => {
           </LinkWidget>
         </div>
       </div>
-      
+
       <div className="flex flex-col gap-4 sm:gap-6">
         <div className="w-full flex justify-center">
           <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56">
@@ -160,11 +178,11 @@ const LoansOverviewSection = ({ control, timeRangeOptions }) => {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <p className="text-xs sm:text-sm text-gray-600">Total Loans</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totalLoans.toLocaleString()}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{isLoading ? "..." : totalLoans.toLocaleString()}</p>
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className="bg-[#FBE6D9] rounded-lg p-4 sm:p-5 border border-gray-200">
             <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -172,48 +190,48 @@ const LoansOverviewSection = ({ control, timeRangeOptions }) => {
                 <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 text-[#E77B33]" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-semibold pb-1 text-gray-900">{checkedOut.toLocaleString()}</p>
+                <p className="text-xl sm:text-2xl font-semibold pb-1 text-gray-900">{isLoading ? "..." : checkedOut.toLocaleString()}</p>
                 <p className="text-xs sm:text-sm text-gray-700">Checked Out</p>
               </div>
             </div>
             <div className="border-t border-gray-300 pt-3 sm:pt-4 mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Active Loans</span>
-                <span className="font-semibold text-gray-900">810</span>
+                <span className="font-semibold text-gray-900">{isLoading ? "..." : activeLoans.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Overdue Loans</span>
-                <span className="font-semibold text-gray-900">190</span>
+                <span className="font-semibold text-gray-900">{isLoading ? "..." : overdueLoans.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Outstanding Fine</span>
-                <span className="font-semibold text-gray-900">₹12,450</span>
+                <span className="font-semibold text-gray-900">{isLoading ? "..." : formatCurrency(outstandingFine)}</span>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-[#D0FAE5] rounded-lg p-4 sm:p-5 border border-gray-200">
             <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 pb-1 rounded-lg bg-[#00A63E1A] flex items-center justify-center flex-shrink-0">
                 <ArrowUpDown className="w-5 h-5 sm:w-6 sm:h-6 text-[#00A63E]" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-900">{checkedIn.toLocaleString()}</p>
+                <p className="text-xl sm:text-2xl font-semibold text-gray-900">{isLoading ? "..." : checkedIn.toLocaleString()}</p>
                 <p className="text-xs sm:text-sm text-gray-700">Checked In</p>
               </div>
             </div>
             <div className="border-t border-gray-300 pt-3 sm:pt-4 mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">On Time Return</span>
-                <span className="font-semibold text-gray-900">500</span>
+                <span className="font-semibold text-gray-900">{isLoading ? "..." : onTimeReturn.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Late Return</span>
-                <span className="font-semibold text-gray-900">69</span>
+                <span className="font-semibold text-gray-900">{isLoading ? "..." : lateReturn.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Fine Collected</span>
-                <span className="font-semibold text-gray-900">₹8,920</span>
+                <span className="font-semibold text-gray-900">{isLoading ? "..." : formatCurrency(fineCollected)}</span>
               </div>
             </div>
           </div>
@@ -260,11 +278,15 @@ const DashboardSection = () => {
   const breadcrumbs = [{ label: "Dashboard" }];
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-  const { control } = useForm({
+  const { control, watch } = useForm({
     defaultValues: {
       timeRange: "today",
     },
   });
+
+  const timeRange = watch("timeRange");
+  const { data: overviewResponse, isLoading } = useDashboardOverview(timeRange);
+  const overview = overviewResponse?.data;
 
   const handleAddNew = () => {
     setIsDialogOpen(true);
@@ -313,12 +335,14 @@ const DashboardSection = () => {
               <LoansOverviewSection
                 control={control}
                 timeRangeOptions={timeRangeOptions}
+                data={overview?.loans}
+                isLoading={isLoading}
               />
             </div>
-            
+
             <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
-              <InventoryOverviewSection />
-              <UsersOverviewSection />
+              <InventoryOverviewSection data={overview?.inventory} isLoading={isLoading} />
+              <UsersOverviewSection data={overview?.users} isLoading={isLoading} />
             </div>
           </div>
 

@@ -47,7 +47,7 @@ const RfidStatusFilter = () => {
                     className="h-9 px-3 rounded-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm flex items-center gap-2"
                 >
                     <Filter className="w-4 h-4 text-[#00796B]" />
-                    <span className="text-[#00796B]">Filter</span>
+                    <span className="text-[#00796B]">{filterOptions.find((o) => o.value === currentFilter)?.label || "All Books"}</span>
                     <ChevronDown className="w-4 h-4 text-gray-500 font-normal" />
                 </ButtonWidget>
             </PopoverTrigger>

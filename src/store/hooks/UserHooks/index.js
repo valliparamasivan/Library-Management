@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { createUser, userChangeStatus, editUser } from "@/store/services/UserServices";
+import { createUser, userChangeStatus, editUser, sendPasswordResetMail } from "@/store/services/UserServices";
 
 export const useCreateUser = () => {
   return useMutation({
@@ -16,5 +16,11 @@ export const useUserChangeStatus = () => {
 export const useEditUser = () => {
   return useMutation({
     mutationFn: (formData) => editUser(formData),
+  });
+};
+
+export const useSendPasswordResetMail = () => {
+  return useMutation({
+    mutationFn: (params) => sendPasswordResetMail(params),
   });
 };

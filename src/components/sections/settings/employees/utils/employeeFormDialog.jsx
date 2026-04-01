@@ -34,7 +34,7 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
   const rolesDataArr = rolesResponse?.data?.content || rolesResponse?.data || [];
   const roleOptions = rolesDataArr.map(role => ({
     value: String(role.roleId),
-    label: role.roleName,
+    label: role.roleName || role.role,
   }));
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
         setProfileImageUrl(null);
       }
 
-      const mappedRole = rolesDataArr.find(r => r.roleName === employeeData.role);
+      const mappedRole = rolesDataArr.find(r => (r.roleName || r.role) === employeeData.role);
       const roleIdStr = mappedRole ? String(mappedRole.roleId) : "";
       
       reset({
@@ -80,7 +80,8 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
 
   const onSubmit = async (data) => {
     try {
-      const submittedRoleName = rolesDataArr.find(r => String(r.roleId) === data.role)?.roleName || data.role;
+      const submittedRoleData = rolesDataArr.find(r => String(r.roleId) === data.role);
+      const submittedRoleName = submittedRoleData?.roleName || submittedRoleData?.role || data.role;
       
       const formData = new FormData();
       formData.append("employeeName", data.employeeName);

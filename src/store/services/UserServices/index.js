@@ -18,3 +18,8 @@ export const editUser = async (formData) => {
   });
   return data;
 };
+
+export const sendPasswordResetMail = async ({ email, userType }) => {
+  const { data } = await clientAxios.post("/public/reset-password-mail", { email, userType });
+  return data;
+};
