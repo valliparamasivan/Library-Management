@@ -24,7 +24,7 @@ clientAxios.interceptors.request.use(
       config.headers.Authorization = `Bearer ${session?.user?.token}`;
     }
     if (config.isMultipart) {
-      config.headers["Content-Type"] = HEADER.MULTIPART_CONTENT_TYPE;
+      delete config.headers["Content-Type"];
     }
     return config;
   },

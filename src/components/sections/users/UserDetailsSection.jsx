@@ -92,14 +92,32 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
 
   const handlePrintCard = () => {
     if (printCardRef.current) {
-      const printWindow = window.open("", "_blank", "width=500,height=400");
+      const printWindow = window.open("", "_blank", "width=600,height=500");
       if (printWindow) {
         printWindow.document.write(`
           <html>
           <head><title>Library Card - ${user.userName}</title>
-          <style>body{display:flex;align-items:center;justify-content:center;margin:0;padding:20px;font-family:sans-serif;}</style>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            html, body { height: 100%; width: 100%; }
+            body { display: flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+            .container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+            .barcode svg { width: 100%; height: 80px; }
+            .user-id { font-size: 28px; font-weight: 600; text-align: center; color: #111; letter-spacing: 2px; }
+            @media print {
+              @page { size: auto; margin: 0; }
+              body { height: 100vh; width: 100vw; }
+            }
+          </style>
           </head>
-          <body>${printCardRef.current.innerHTML}</body>
+          <body>
+            <div class="container">
+              <div class="barcode">
+                ${printCardRef.current.querySelector('.bg-white.rounded-lg svg')?.outerHTML || ''}
+              </div>
+              <p class="user-id">${user.userId}</p>
+            </div>
+          </body>
           </html>
         `);
         printWindow.document.close();
@@ -201,7 +219,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
   const onSubmitEditUser = async (data) => {
     try {
       const formData = new FormData();
-      formData.append("internalUserId", String(user.userId));
+      formData.append("internalUserId", String(user.internalUserId));
       formData.append("status", isStatusActive ? "true" : "false");
       formData.append("userName", data.name);
       formData.append("email", data.email);

@@ -3,11 +3,12 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { X } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import FormSelect from "@/components/form/FormSelect";
 import BarcodeDisplay from "./BarcodeDisplay";
+import { generateBarcodeHtml, openPrintWindow } from "./generateBarcodeHtml";
 import { useReprintRfid } from "@/store/hooks/InventoryHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
@@ -19,7 +20,6 @@ const ReprintDialog = ({
     rfidId,
 }) => {
     const router = useRouter();
-    const printRef = useRef(null);
     const [newRfid, setNewRfid] = useState("");
     const { control, watch, reset } = useForm({
         defaultValues: {
@@ -62,26 +62,10 @@ const ReprintDialog = ({
     const handlePrint = async () => {
         if (!selectedReason) return;
 
-        // Trigger browser print
-        if (printRef.current) {
-            const printWindow = window.open("", "_blank", "width=400,height=300");
-            if (printWindow) {
-                printWindow.document.write(`
-                    <html>
-                    <head><title>Re-Print RFID Tag</title></head>
-                    <body style="display:flex;align-items:center;justify-content:center;margin:0;padding:20px;">
-                        ${printRef.current.innerHTML}
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.focus();
-                printWindow.print();
-                printWindow.close();
-            }
+        if (currentRfid) {
+            openPrintWindow(generateBarcodeHtml(currentRfid), "Re-Print RFID Tag");
         }
 
-        // Call reprint API to update status
         if (rfidId) {
             try {
                 const reasonLabel = reasonOptions.find((o) => o.value === selectedReason)?.label || selectedReason;
@@ -156,7 +140,7 @@ const ReprintDialog = ({
                             <label className="text-sm text-gray-500 font-medium">
                                 New RFID
                             </label>
-                            <div ref={printRef} className="flex flex-col items-center justify-center py-2">
+                            <div className="flex flex-col items-center justify-center py-2">
                                 <BarcodeDisplay value={currentRfid} />
                             </div>
                         </div>

@@ -88,6 +88,7 @@ const RenewConfirmDialog = ({ isOpen, onOpenChange, item, onConfirm, loading = f
             type="button"
             onClick={handleClose}
             disabled={loading}
+            loader={false}
             className="flex-1 h-9 sm:h-10 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg text-xs sm:text-sm"
           >
             Cancel

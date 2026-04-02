@@ -174,9 +174,16 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
     const bulkPrintEligibleCount = selectedRecords.filter(
         (r) => r.status === 'Printed Unmapped' || r.status === 'Untagged'
     ).length;
-    const bulkPrintSkippedCount = selectedRecords.filter((r) => r.status === 'Tagged').length;
-    const bulkPrintTags = selectedRecords
+    const bulkPrintReprintRecords = selectedRecords.filter((r) => r.status === 'Tagged');
+    const bulkPrintSkippedCount = bulkPrintReprintRecords.length;
+    const bulkPrintEligibleRecords = selectedRecords.filter(
+        (r) => r.status === 'Printed Unmapped' || r.status === 'Untagged'
+    );
+    const bulkPrintTags = bulkPrintEligibleRecords
         .map((r) => r.rfidTagId)
+        .filter(Boolean);
+    const bulkPrintRfidIds = bulkPrintEligibleRecords
+        .map((r) => r.rfidId)
         .filter(Boolean);
 
 
@@ -480,6 +487,8 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                     eligibleCount={bulkPrintEligibleCount}
                     skippedCount={bulkPrintSkippedCount}
                     tagsToPrint={bulkPrintTags}
+                    rfidIds={bulkPrintRfidIds}
+                    reprintRecords={bulkPrintReprintRecords}
                 />
 
                 <ReprintDialog

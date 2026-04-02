@@ -6,7 +6,6 @@ export const AUTH = {
 
 export const HEADER = {
   CONTENT_TYPE: "application/json",
-  MULTIPART_CONTENT_TYPE: "multipart/form-data,boundary=----WebKitFormBoundaryyrV7KO0BoCBuDbTL",
   TIMEOUT: 6000,
 };
 
