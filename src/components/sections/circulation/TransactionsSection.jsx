@@ -51,7 +51,7 @@ const TransactionsSection = () => {
   const { mutateAsync: searchUserApi } = useSearchBookOrUser();
   const { mutateAsync: returnBookApi, isPending: isReturningBook } = useReturnBook();
   const { mutateAsync: renewBookApi, isPending: isRenewingBook } = useRenewBook();
-  const { showErrorToast } = useErrorHandler();
+  const { showErrorToast, showSuccessToast } = useErrorHandler();
 
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [selectedItemForTransfer, setSelectedItemForTransfer] = useState(null);
@@ -131,6 +131,7 @@ const TransactionsSection = () => {
       overdueDays: tx.daysLeft != null ? Math.abs(Math.min(tx.daysLeft, 0)) : 0,
       fine: tx.fineAmount > 0 ? `₹ ${tx.fineAmount}` : "₹ 0",
       status: tx.statusTag || tx.status,
+      newDueDate: tx.newDueDate || "-",
     }));
   }, []);
 
@@ -214,7 +215,7 @@ const TransactionsSection = () => {
         rfidList: [selectedItemForTransfer?.refId],
       });
       setIsTransferDialogOpen(false);
-      setIsTransferSuccessOpen(true);
+      showSuccessToast("Book checked in successfully");
       fetchTransactions();
     } catch (error) {
       showErrorToast(error);
@@ -226,6 +227,7 @@ const TransactionsSection = () => {
       title: record.bookTitle,
       refId: record.rfid,
       dueDate: record.dueDate,
+      newDueDate: record.newDueDate,
       status: record.status === "Overdue" ? "overdue" : "onTime",
     };
     setSelectedItemForRenew(item);
@@ -234,12 +236,14 @@ const TransactionsSection = () => {
 
   const handleRenewConfirm = async () => {
     try {
-      await renewBookApi({
+      const response = await renewBookApi({
         userId: String(internalUserIdParam),
         rfidList: [selectedItemForRenew?.refId],
       });
+      const renewed = response?.data?.[0];
+      const newDate = renewed?.newDueDate || "";
       setIsRenewDialogOpen(false);
-      setIsRenewSuccessOpen(true);
+      showSuccessToast(newDate ? `Book renewed successfully. New due date: ${newDate}` : "Book renewed successfully");
       fetchTransactions();
     } catch (error) {
       showErrorToast(error);

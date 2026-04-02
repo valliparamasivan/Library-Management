@@ -79,14 +79,14 @@ const LocationSection = ({ response }) => {
         },
         {
             key: "shelfName",
-            label: "Shelf Count",
+            label: "Shelf Name",
             sortable: true,
             minWidth: "120px",
             lgMinWidth: "150px",
         },
         {
             key: "rowName",
-            label: "Row Count",
+            label: "Row Name",
             sortable: true,
             minWidth: "120px",
             lgMinWidth: "150px",

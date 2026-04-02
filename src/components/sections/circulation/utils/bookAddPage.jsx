@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Search, ScanLine, User, BookMinus, Plus, X, Loader2 } from "lucide-react";
@@ -30,8 +30,7 @@ const BookAddPage = () => {
     try {
       const response = await searchBookApi({ type: 2, searchKey: searchValue.trim(), loanFilter: "AVAILABLE" });
       const data = response?.data || {};
-      setSearchResults({
-        availableBooks: (data.availableBooks || []).map((book) => ({
+      const mapped = (data.availableBooks || []).map((book) => ({
           bookId: book.bookId,
           bookCopyId: book.bookCopyId,
           rfid: book.rfid,
@@ -43,12 +42,29 @@ const BookAddPage = () => {
           issuedCopies: book.issuedCopies ?? 0,
           availableCopies: ((book.totalCopies ?? 0) - (book.issuedCopies ?? 0)),
           bookImageUrl: book.bookImageUrl,
-        })),
-      });
+      })).filter((book) => book.availableCopies > 0);
+      setSearchResults({ availableBooks: mapped });
     } catch (error) {
       showErrorToast(error);
     }
   };
+
+  // Debounced live search
+  const debounceRef = useRef(null);
+  useEffect(() => {
+    const value = searchValue?.trim();
+    if (!value) {
+      setSearchResults(null);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      handleSearch();
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchValue]);
 
   const handleScanClick = () => {
     setIsScanning(true);
@@ -213,9 +229,13 @@ const BookAddPage = () => {
                         </div>
 
                         <div className="flex-shrink-0 w-32 flex justify-center">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 text-green-800 text-sm font-medium rounded-lg">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg ${
+                            book.availableCopies > 0
+                              ? "bg-green-50 border border-green-200 text-green-800"
+                              : "bg-red-50 border border-red-200 text-red-800"
+                          }`}>
                             <BookMinus className="w-4 h-4" />
-                            {book.availableCopies}/{book.totalCopies}
+                            {book.availableCopies > 0 ? `${book.availableCopies}/${book.totalCopies}` : "Issued"}
                           </span>
                         </div>
 
@@ -223,7 +243,12 @@ const BookAddPage = () => {
                           <ButtonWidget
                             type="button"
                             onClick={() => handleAddBook(book)}
-                            className="bg-[#00796B] hover:bg-[#00695C] text-white rounded-lg px-4 py-2 flex items-center gap-1.5 text-sm"
+                            disabled={book.availableCopies <= 0}
+                            className={`rounded-lg px-4 py-2 flex items-center gap-1.5 text-sm ${
+                              book.availableCopies > 0
+                                ? "bg-[#00796B] hover:bg-[#00695C] text-white"
+                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            }`}
                           >
                             <Plus className="w-4 h-4" />
                             Add

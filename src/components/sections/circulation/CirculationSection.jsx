@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import PageLayout from "@/components/layouts/PageLayout";
 import FormInput from "@/components/form/FormInput";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
@@ -54,7 +54,7 @@ const CirculationSection = () => {
   const { mutateAsync: returnBookApi, isPending: isReturningBook } = useReturnBook();
   const { mutateAsync: renewBookApi, isPending: isRenewingBook } = useRenewBook();
   const { mutateAsync: scanUserApi, isPending: isScanningUser } = useScanUser();
-  const { showErrorToast } = useErrorHandler();
+  const { showErrorToast, showSuccessToast } = useErrorHandler();
 
   const [searchType, setSearchType] = useState("user");
   const [searchMode, setSearchMode] = useState(null);
@@ -191,7 +191,10 @@ const CirculationSection = () => {
           issuedCopies: book.issuedCopies || 0,
           availableCopies: ((book.totalCopies || 0) - (book.issuedCopies || 0)) + "/" + (book.totalCopies || 0),
           bookImageUrl: book.bookImageUrl,
-        }));
+        })).filter((book) => {
+          const available = (book.totalCopies || 0) - (book.issuedCopies || 0);
+          return available > 0;
+        });
 
         const transactionsByBook = {};
         transactionBooks.forEach((tx) => {
@@ -234,6 +237,31 @@ const CirculationSection = () => {
     }
   };
 
+  // Debounced live search
+  const debounceRef = useRef(null);
+  useEffect(() => {
+    const value = searchValue?.trim();
+    if (!value) {
+      setSearchMode(null);
+      setSearchResult(null);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      handleSearch();
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchValue]);
+
+  // Auto-load transactions when user is selected
+  useEffect(() => {
+    if (searchMode === "user" && searchResult?.internalUserId && showTransactions) {
+      refreshTransactions();
+    }
+  }, [searchResult?.internalUserId]);
+
   const clearSearch = () => {
     reset({ userOrBookRfid: "" });
     setSearchMode(null);
@@ -246,7 +274,7 @@ const CirculationSection = () => {
   const selectUser = (user) => {
     setSearchMode("user");
     setSearchResult(user);
-    setShowTransactions(false);
+    setShowTransactions(true);
     setTransactions([]);
   };
 
@@ -255,13 +283,7 @@ const CirculationSection = () => {
     return new Date(dateStr).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
   };
 
-  const handleViewTransactions = async () => {
-    if (showTransactions) {
-      setShowTransactions(false);
-      return;
-    }
-
-    setShowTransactions(true);
+  const refreshTransactions = async () => {
     setTransactions([]);
 
     try {
@@ -288,8 +310,16 @@ const CirculationSection = () => {
       setTransactions(mapped);
     } catch (error) {
       showErrorToast(error);
-      setShowTransactions(false);
     }
+  };
+
+  const handleViewTransactions = async () => {
+    if (showTransactions) {
+      setShowTransactions(false);
+      return;
+    }
+    setShowTransactions(true);
+    refreshTransactions();
   };
 
   const handleTransferClick = (record) => {
@@ -311,9 +341,9 @@ const CirculationSection = () => {
         rfidList: [selectedItemForTransfer?.refId],
       });
       setIsTransferDialogOpen(false);
-      setIsTransferSuccessOpen(true);
+      showSuccessToast("Book checked in successfully");
       if (showTransactions && searchResult?.internalUserId) {
-        handleViewTransactions();
+        refreshTransactions();
       }
     } catch (error) {
       showErrorToast(error);
@@ -325,6 +355,7 @@ const CirculationSection = () => {
       title: record.bookTitle,
       refId: record.rfid,
       dueDate: record.dueDate,
+      newDueDate: record.newDueDate,
       status: record.status === "Overdue" ? "overdue" : "onTime",
       userId: searchResult?.internalUserId,
     };
@@ -334,14 +365,16 @@ const CirculationSection = () => {
 
   const handleRenewConfirm = async () => {
     try {
-      await renewBookApi({
+      const response = await renewBookApi({
         userId: String(selectedItemForRenew?.userId),
         rfidList: [selectedItemForRenew?.refId],
       });
+      const renewed = response?.data?.[0];
+      const newDate = renewed?.newDueDate || "";
       setIsRenewDialogOpen(false);
-      setIsRenewSuccessOpen(true);
+      showSuccessToast(newDate ? `Book renewed successfully. New due date: ${newDate}` : "Book renewed successfully");
       if (showTransactions && searchResult?.internalUserId) {
-        handleViewTransactions();
+        refreshTransactions();
       }
     } catch (error) {
       showErrorToast(error);

@@ -4,26 +4,12 @@ import React from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { CircleCheck, X } from "lucide-react";
-import { format, addDays, parse } from "date-fns";
-
 const RenewSuccessDialog = ({ isOpen, onOpenChange, item }) => {
   const handleDone = () => onOpenChange(false);
 
   if (!item) return null;
 
-  // Calculate new due date (add 30 days to current due date)
-  const getNewDueDate = () => {
-    try {
-      const currentDueDate = parse(item.dueDate, "dd-MM-yyyy", new Date());
-      const newDueDate = addDays(currentDueDate, 30);
-      return format(newDueDate, "MM-dd-yyyy");
-    } catch {
-      // Fallback if date parsing fails
-      return "02-26-2025";
-    }
-  };
-
-  const newDueDate = getNewDueDate();
+  const newDueDate = item.newDueDate || item.dueDate || "-";
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

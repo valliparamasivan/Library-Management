@@ -79,6 +79,7 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
     author: book.author || 'Unknown Author',
     year: book.year || null,
     genre: book.categoryName || 'Uncategorized',
+    subject: book.subject || '-',
     language: book.language || '-',
     available: book.availableCopies || 0,
     total: book.totalCopies || 0,
@@ -393,7 +394,7 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
               </div>
 
               <p className="text-xs sm:text-xs text-black pb-2 line-clamp-1">
-                Subject Name
+                {book.subject}
               </p>
 
               <div className="flex items-center gap-1.5 text-xs sm:text-sm pb-2 text-gray-700">

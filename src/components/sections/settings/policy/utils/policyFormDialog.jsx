@@ -25,7 +25,7 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
       policyName: "",
       maxBooksAllowed: "",
       loanPeriodDays: "",
-      finePerDay: "$ 0.0",
+      finePerDay: "",
       maxRenewalPerBook: "",
       active: 0,
     },
@@ -50,7 +50,7 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
         policyName: "",
         maxBooksAllowed: "",
         loanPeriodDays: "",
-        finePerDay: "$ 0.0",
+        finePerDay: "",
         maxRenewalPerBook: "",
         active: 0,
       });
@@ -60,15 +60,11 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
   const handleFormSubmit = async (data) => {
     try {
     
-      const finePerDayValue = typeof data.finePerDay === 'string' 
-        ? parseFloat(data.finePerDay.replace(/[^0-9.]/g, '')) || 0
-        : parseFloat(data.finePerDay) || 0;
-
       const payload = {
         policyName: data.policyName,
         maxBooksAllowed: parseInt(data.maxBooksAllowed) || 0,
         loanPeriodDays: parseInt(data.loanPeriodDays) || 0,
-        finePerDay: finePerDayValue,
+        finePerDay: parseFloat(data.finePerDay) || 0,
         maxRenewalPerBook: parseInt(data.maxRenewalPerBook) || 0,
         active: data.active === 1,
       };
@@ -123,7 +119,7 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
               <FormInput control={control} name="policyName" label="Policy Name" placeholder="Enter Policy Name" required />
               <FormInput control={control} name="maxBooksAllowed" label="Maximum Books Allowed" placeholder="Enter Count" type="number" required />
               <FormInput control={control} name="loanPeriodDays" label="Loan Period (Days)" placeholder="Enter Days" type="number" required />
-              <FormInput control={control} name="finePerDay" label="Fine Amount for Overdue (per Day)" placeholder="$ 0.0" required />
+              <FormInput control={control} name="finePerDay" label="Fine per Day" placeholder="0.0" type="number" required />
               <FormInput control={control} name="maxRenewalPerBook" label="Maximum Renewals per Book" placeholder="Enter Count" type="number" required />
               {isEditMode && <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                 <FormSwitch 
