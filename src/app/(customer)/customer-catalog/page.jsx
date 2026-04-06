@@ -1,8 +1,26 @@
 import CustomerCatalogSection from '@/components/sections/customer/customer-catalog/customerCatalogSection';
 import { getCustomerCatalogList, getLanguagesDropdown, getBookCategoriesDropdown } from '@/app/api/customerServer';
+import { redirect } from 'next/navigation';
 
 const CustomerCatalogPage = async ({ searchParams }) => {
     const params = await searchParams;
+
+    const hasAnyFilter = !!(
+        params?.categoryName ||
+        params?.genre ||
+        params?.language ||
+        params?.year ||
+        params?.author ||
+        params?.available ||
+        params?.search ||
+        params?.searchKey ||
+        params?.sortField
+    );
+
+    if (!hasAnyFilter) {
+        redirect('/customer-catalog?available=true');
+    }
+
     const languages = await getLanguagesDropdown();
     const bookCategories = await getBookCategoriesDropdown();
     const apiParams = {

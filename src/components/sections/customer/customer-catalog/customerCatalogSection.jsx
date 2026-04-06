@@ -260,7 +260,7 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
     updateURLParams({
       language: selectedLanguage.length > 0 ? selectedLanguage.join(',') : null,
       year: selectedYears.length > 0 ? selectedYears.join(',') : null,
-      available: availableOnly ? 'true' : null,
+      available: availableOnly ? 'true' : 'null',
       page: null
     });
     setIsFilterOpen(false);
