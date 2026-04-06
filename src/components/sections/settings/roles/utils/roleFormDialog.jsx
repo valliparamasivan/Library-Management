@@ -14,6 +14,8 @@ import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 import { useRoleCreate, useRoleUpdate, useGetRoleById, useGetAllRolePermissions } from "@/store/hooks/SettingsHooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { PERMISSIONS_QUERY_KEY } from "@/providers/PermissionProvider";
 
 const RoleFormDialog = ({ isOpen, onOpenChange, id }) => {
   const router = useRouter();
@@ -67,6 +69,7 @@ const RoleFormDialog = ({ isOpen, onOpenChange, id }) => {
     }
   }, [isOpen, id, roleData, allPermsList, reset]);
 
+  const queryClient = useQueryClient();
   const { mutateAsync: roleCreate } = useRoleCreate();
   const { mutateAsync: roleUpdate } = useRoleUpdate();
   const { showSuccessToast, showErrorToast, setFieldError } = useErrorHandler(setError);
@@ -75,6 +78,14 @@ const RoleFormDialog = ({ isOpen, onOpenChange, id }) => {
     setPermissions((prev) =>
       prev.map((p, i) => (i === index ? { ...p, [field]: !p[field] } : p))
     );
+  };
+
+  const isAllChecked = (field) => permissions.length > 0 && permissions.every((p) => p[field]);
+  const isSomeChecked = (field) => permissions.some((p) => p[field]) && !isAllChecked(field);
+
+  const toggleAllForField = (field) => {
+    const newValue = !isAllChecked(field);
+    setPermissions((prev) => prev.map((p) => ({ ...p, [field]: newValue })));
   };
 
   const onSubmit = async (data) => {
@@ -103,6 +114,7 @@ const RoleFormDialog = ({ isOpen, onOpenChange, id }) => {
         || response?.message
         || (id ? "Role updated successfully" : "Role created successfully");
       showSuccessToast(successMsg);
+      queryClient.invalidateQueries({ queryKey: PERMISSIONS_QUERY_KEY });
       handleCancel();
       router.refresh();
     } catch (error) {
@@ -155,10 +167,30 @@ const RoleFormDialog = ({ isOpen, onOpenChange, id }) => {
                 <thead>
                   <tr className="bg-gray-50 border-b border-[#E2E8F0]">
                     <th className="text-left text-xs font-semibold text-gray-700 px-4 py-3">Permission</th>
-                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">View</th>
-                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">Add</th>
-                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">Edit</th>
-                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">Delete</th>
+                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>View</span>
+                        <Checkbox checked={isSomeChecked("view") ? "indeterminate" : isAllChecked("view")} onCheckedChange={() => toggleAllForField("view")} />
+                      </div>
+                    </th>
+                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Add</span>
+                        <Checkbox checked={isSomeChecked("add") ? "indeterminate" : isAllChecked("add")} onCheckedChange={() => toggleAllForField("add")} />
+                      </div>
+                    </th>
+                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Edit</span>
+                        <Checkbox checked={isSomeChecked("edit") ? "indeterminate" : isAllChecked("edit")} onCheckedChange={() => toggleAllForField("edit")} />
+                      </div>
+                    </th>
+                    <th className="text-center text-xs font-semibold text-gray-700 px-4 py-3 w-20">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Delete</span>
+                        <Checkbox checked={isSomeChecked("delete") ? "indeterminate" : isAllChecked("delete")} onCheckedChange={() => toggleAllForField("delete")} />
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

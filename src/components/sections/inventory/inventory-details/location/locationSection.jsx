@@ -12,9 +12,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import InventoryDetailsNavigation from '../utils/inventoryDetailsNavigation';
 import AssignLocationDialog from './utils/assignLocationDialog';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const LocationSection = ({ slug }) => {
     const router = useRouter();
+    const { canAnyEdit } = usePermissions();
+    const inventoryPerms = ["Inventory", "RFID and Location", "Location"];
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
 
@@ -141,7 +144,7 @@ const LocationSection = ({ slug }) => {
             minWidth: "120px",
             lgMinWidth: "150px",
         },
-        {
+        ...(canAnyEdit(inventoryPerms) ? [{
             key: "actions",
             label: "Actions",
             sortable: false,
@@ -156,7 +159,7 @@ const LocationSection = ({ slug }) => {
                     Change Location
                 </ButtonWidget>
             ),
-        },
+        }] : []),
     ];
 
     const bookTitle = "The Time Traveler";

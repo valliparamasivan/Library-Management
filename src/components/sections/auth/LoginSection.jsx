@@ -3,11 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "nextjs-toploader/app";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import Two from "@/assets/image/login.png";
 import logo from "@/assets/image/sub_logo 1.png";
 import { useErrorHandler } from "@/components/custom-hooks/useErrorHandler";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 import FormInput from "@/components/form/FormInput";
 import FormPassword from "@/components/form/FormPassword";
 import FormWrapper from "@/components/form/FormWrapper";
@@ -16,6 +17,8 @@ import ImageWidget from "@/components/widgets/ImageWidget";
 import LinkWidget from "@/components/widgets/LinkWidget";
 import { signInSchema } from "@/helpers/ValidationHelpers";
 import { useLogin } from "@/store/hooks/AuthHooks";
+import { getFirstAccessibleRoute } from "@/helpers/PermissionRoutes";
+import { fetchMyPermissions } from "@/store/services/PermissionServices";
 import Arrow from "@/assets/icons/22.svg";
 
 const STORAGE_KEY = "savedCredentials";
@@ -56,6 +59,8 @@ const clearCredentials = () => {
 const LoginSection = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { permissions: sessionPerms, isLoading: permsLoading } = usePermissions();
+  const hasRedirected = useRef(false);
   const {
     control,
     handleSubmit,
@@ -109,7 +114,21 @@ const LoginSection = () => {
           }
 
           showSuccessToast("Logged in successfully!!!");
-          router.push("/dashboard");
+          hasRedirected.current = true;
+
+          let targetRoute = "/dashboard";
+          if (role !== "User") {
+            try {
+              const permResponse = await fetchMyPermissions();
+              const perms = permResponse?.data || [];
+              targetRoute = perms.length > 0 ? getFirstAccessibleRoute(perms) : "/dashboard";
+            } catch (_) {
+              targetRoute = "/dashboard";
+            }
+          } else {
+            targetRoute = "/customer-dashboard";
+          }
+          router.push(targetRoute);
         } else {
           showErrorToast(result?.error ?? "Login failed");
         }
@@ -138,12 +157,15 @@ const LoginSection = () => {
   }, [rememberMe, status]);
 
   useEffect(() => {
-    if (status === "authenticated" && session) {
-      if (session?.user?.role === "Admin") {
-        router.push("/dashboard");
+    if (hasRedirected.current) return;
+    if (status === "authenticated" && session && !permsLoading) {
+      if (session?.user?.role && session?.user?.role !== "User") {
+        hasRedirected.current = true;
+        const target = sessionPerms.length > 0 ? getFirstAccessibleRoute(sessionPerms) : "/dashboard";
+        router.push(target);
       }
     }
-  }, [status, session, router]);
+  }, [status, session, router, sessionPerms, permsLoading]);
 
   return (
     <FormWrapper onSubmit={handleSubmit(onSubmit)}>

@@ -21,9 +21,12 @@ import BulkRfidPrintDialog from './utils/BulkRfidPrintDialog';
 import ReprintDialog from './utils/ReprintDialog';
 import TagRfid from './utils/TagRfid';
 import PrintRfidTag from './utils/PrintRfidTag';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, sectionDropdown, shelfDropdown, rowDropdown }) => {
     const router = useRouter();
+    const { canAnyEdit } = usePermissions();
+    const inventoryPerms = ["Inventory", "RFID and Location"];
     const searchParams = useSearchParams();
     const typeFilter = searchParams.get('type');
     const statusFilter = typeFilter === null ? 1 : parseInt(typeFilter, 10);
@@ -317,7 +320,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                 </div>
             ),
         },
-        {
+        ...(canAnyEdit(inventoryPerms) ? [{
             key: "actions",
             label: "Actions",
             sortable: false,
@@ -384,7 +387,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
                     )}
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     return (

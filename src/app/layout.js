@@ -1,5 +1,6 @@
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { NextAuthProvider } from "@/providers/SessionProvider";
+import { PermissionProvider } from "@/providers/PermissionProvider";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         <NextAuthProvider>
-          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <ReactQueryProvider>
+            <PermissionProvider>{children}</PermissionProvider>
+          </ReactQueryProvider>
         </NextAuthProvider>
       </body>
     </html>

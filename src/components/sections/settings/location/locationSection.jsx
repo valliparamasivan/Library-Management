@@ -10,8 +10,11 @@ import { SquarePen, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import SettingsViewNavigation from '../utils/settingsViewNavigation';
 import LocationFormDialog from './utils/locationFormDialog';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const LocationSection = ({ response }) => {
+    const { canAnyAdd, canAnyEdit } = usePermissions();
+    const settingsPerms = ["Settings", "Location"];
     console.log("response", response);
     const breadcrumbs = [
         { label: 'Settings', href: '/settings' },
@@ -108,7 +111,7 @@ const LocationSection = ({ response }) => {
                 );
             },
         },
-        {
+        ...(canAnyEdit(settingsPerms) ? [{
             key: "actions",
             label: "Actions",
             sortable: false,
@@ -124,7 +127,7 @@ const LocationSection = ({ response }) => {
                     </button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     return (
@@ -141,13 +144,15 @@ const LocationSection = ({ response }) => {
                             onSearch={handleSearch}
                             className="w-full sm:w-60 rounded-[14px]!"
                         />
-                        <ButtonWidget
-                            onClick={handleAddNew}
-                            className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-                        >
-                            <Plus className="w-4 h-4 text-white" />
-                            Add Location
-                        </ButtonWidget>
+                        {canAnyAdd(settingsPerms) && (
+                            <ButtonWidget
+                                onClick={handleAddNew}
+                                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4 text-white" />
+                                Add Location
+                            </ButtonWidget>
+                        )}
                         <LocationFormDialog
                             isOpen={isDialogOpen}
                             onOpenChange={handleDialogOpenChange}

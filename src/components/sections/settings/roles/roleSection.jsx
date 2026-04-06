@@ -15,9 +15,12 @@ import RoleFormDialog from './utils/roleFormDialog';
 import { useChangeRoleStatus } from '@/store/hooks/SettingsHooks';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import { Switch } from '@/components/ui/switch';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const RoleSection = ({ response: apiResponse }) => {
     const router = useRouter();
+    const { canAnyAdd, canAnyEdit } = usePermissions();
+    const settingsPerms = ["Settings", "Roles", "Roles & Permissions"];
     const breadcrumbs = [
         { label: 'Settings', href: '/settings' },
     ]
@@ -154,15 +157,16 @@ const RoleSection = ({ response: apiResponse }) => {
                     <Switch
                         checked={isActive}
                         onCheckedChange={() => handleStatusToggle(record.id)}
+                        disabled={!canAnyEdit(settingsPerms)}
                         className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
                     />
                 );
             },
         },
-        {
+        ...(canAnyEdit(settingsPerms) ? [{
             key: "actions",
             label: "Actions",
-            sortable: true,
+            sortable: false,
             minWidth: "120px",
             render: (record) => (
                 <div className="flex gap-1">
@@ -175,7 +179,7 @@ const RoleSection = ({ response: apiResponse }) => {
                     </button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     return (
@@ -192,13 +196,15 @@ const RoleSection = ({ response: apiResponse }) => {
                             onSearch={handleSearch}
                             className="w-full sm:w-60 rounded-[14px]!"
                         />
-                        <ButtonWidget
-                            onClick={handleAddNew}
-                            className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-                        >
-                            <Plus className="w-4 h-4 text-white" />
-                            Add Role
-                        </ButtonWidget>
+                        {canAnyAdd(settingsPerms) && (
+                            <ButtonWidget
+                                onClick={handleAddNew}
+                                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4 text-white" />
+                                Add Role
+                            </ButtonWidget>
+                        )}
                         <RoleFormDialog
                             isOpen={isDialogOpen}
                             onOpenChange={handleDialogOpenChange}

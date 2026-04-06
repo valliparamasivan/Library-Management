@@ -18,11 +18,14 @@ import logo from "@/assets/image/book.png";
 import InventoryDialog from "@/components/sections/inventory/utils/InventoryDialog";
 import InventoryFilterWidget from "@/components/widgets/InventoryFilterWidget";
 import LinkWidget from "@/components/widgets/LinkWidget";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 
 
 const InventorySection = ({ response, languages, bookCategories, bookTypes, publishers }) => {
   console.log("response", response);
   const router = useRouter();
+  const { canAnyAdd, canAnyEdit } = usePermissions();
+  const inventoryPerms = ["Inventory", "Book Details"];
   const [viewMode, setViewMode] = useState("list");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -227,7 +230,7 @@ const defaultColumns = [
         );
       },
     },
-    {
+    ...(canAnyEdit(inventoryPerms) ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -243,7 +246,7 @@ const defaultColumns = [
           </button>
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -276,13 +279,15 @@ const defaultColumns = [
               tooltipWidth="w-200"
               hideFilter={true}
             /> */}
-            <ButtonWidget 
-              onClick={handleAddNew}
-              className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4 text-white" />
-              Add New
-            </ButtonWidget>
+            {canAnyAdd(inventoryPerms) && (
+              <ButtonWidget
+                onClick={handleAddNew}
+                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4 text-white" />
+                Add New
+              </ButtonWidget>
+            )}
             <InventoryDialog
               isOpen={isDialogOpen}
               onOpenChange={handleDialogOpenChange}

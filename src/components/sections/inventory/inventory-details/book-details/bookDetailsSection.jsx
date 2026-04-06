@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { getStatusColor } from '@/helpers/FuntionalHelpers';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import { useBookChangeStatus } from '@/store/hooks/InventoryHooks';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const deriveBookCatalogActive = (data) => {
     if (!data) return false;
@@ -26,6 +27,8 @@ const deriveBookCatalogActive = (data) => {
 
 const BookDetailsSection = ({ slug, bookData: apiBookData, languages, bookCategories, bookTypes }) => {
     const router = useRouter();
+    const { canAnyEdit, canAnyAdd } = usePermissions();
+    const inventoryPerms = ["Inventory", "Book Details"];
     const { mutateAsync: changeBookStatus, isPending: isStatusChangePending } = useBookChangeStatus();
     const { showSuccessToast, showErrorToast } = useErrorHandler();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -139,13 +142,15 @@ const BookDetailsSection = ({ slug, bookData: apiBookData, languages, bookCatego
                         <div className="flex-1">
                             <InventoryDetailsNavigation currentPage="book-details" slug={slug} />
                         </div>
-                        <ButtonWidget
-                            onClick={handleAddQuantity}
-                            className="flex-shrink-0 px-4 py-2 bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-lg cursor-pointer flex items-center gap-2 border-0"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span className="text-sm font-medium">Copies</span>
-                        </ButtonWidget>
+                        {canAnyAdd(inventoryPerms) && (
+                            <ButtonWidget
+                                onClick={handleAddQuantity}
+                                className="flex-shrink-0 px-4 py-2 bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-lg cursor-pointer flex items-center gap-2 border-0"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span className="text-sm font-medium">Copies</span>
+                            </ButtonWidget>
+                        )}
                     </div>
                 </div>
                 <div className="bg-white rounded-lg border border-gray-200 p-6 mt-2">
@@ -163,19 +168,21 @@ const BookDetailsSection = ({ slug, bookData: apiBookData, languages, bookCatego
                                     <p className="text-sm text-gray-600 flex-shrink-0">ISBN</p>
                                     <p className="text-sm font-semibold text-gray-900 text-right truncate min-w-0">{bookData.isbn}</p>
                                 </div>
-                                <ButtonWidget
-                                    onClick={handleEdit}
-                                    className="w-full py-1.5 px-3 border border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md font-semibold text-sm flex items-center justify-center gap-2 min-h-[38px]"
-                                >
-                                    <SquarePen className="w-4 h-4 text-blue-600" />
-                                    <span className="text-sm font-medium text-[#1A1A1A]">Edit</span>
-                                </ButtonWidget>
+                                {canAnyEdit(inventoryPerms) && (
+                                    <ButtonWidget
+                                        onClick={handleEdit}
+                                        className="w-full py-1.5 px-3 border border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md font-semibold text-sm flex items-center justify-center gap-2 min-h-[38px]"
+                                    >
+                                        <SquarePen className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-medium text-[#1A1A1A]">Edit</span>
+                                    </ButtonWidget>
+                                )}
                                 <div className="flex justify-between items-center gap-6 px-3 py-2 border border-gray-200 rounded-md">
                                     <p className="text-sm text-gray-600 flex-shrink-0">Status</p>
                                     <Switch
                                         checked={isStatusActive}
                                         onCheckedChange={handleStatusToggle}
-                                        disabled={isStatusChangePending}
+                                        disabled={isStatusChangePending || !canAnyEdit(inventoryPerms)}
                                         className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
                                     />
                                 </div>

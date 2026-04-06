@@ -15,9 +15,12 @@ import EmployeeFormDialog from './utils/employeeFormDialog';
 import { useChangeEmployeeStatus } from '@/store/hooks/SettingsHooks';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import { Switch } from '@/components/ui/switch';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
     const router = useRouter();
+    const { canAnyAdd, canAnyEdit } = usePermissions();
+    const settingsPerms = ["Settings", "Employees"];
     const breadcrumbs = [
         { label: 'Settings', href: '/settings' },
     ]
@@ -191,12 +194,13 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
                     <Switch
                         checked={isActive}
                         onCheckedChange={() => handleStatusToggle(record.id)}
+                        disabled={!canAnyEdit(settingsPerms)}
                         className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
                     />
                 );
             },
         },
-        {
+        ...(canAnyEdit(settingsPerms) ? [{
             key: "actions",
             label: "Actions",
             sortable: false,
@@ -212,7 +216,7 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
                     </button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     return (
@@ -229,13 +233,15 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
                             onSearch={handleSearch}
                             className="w-full sm:w-60 rounded-[14px]!"
                         />
-                        <ButtonWidget
-                            onClick={handleAddNew}
-                            className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-                        >
-                            <Plus className="w-4 h-4 text-white" />
-                            Add Employee
-                        </ButtonWidget>
+                        {canAnyAdd(settingsPerms) && (
+                            <ButtonWidget
+                                onClick={handleAddNew}
+                                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4 text-white" />
+                                Add Employee
+                            </ButtonWidget>
+                        )}
                         <EmployeeFormDialog
                             isOpen={isDialogOpen}
                             onOpenChange={handleDialogOpenChange}

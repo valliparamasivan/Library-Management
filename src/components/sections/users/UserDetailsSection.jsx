@@ -20,6 +20,7 @@ import SuccessPopupWidget from '@/components/widgets/SuccessPopupWidget';
 import useURLParams from '@/components/custom-hooks/useURLParams';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
 import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const BARCODE_BARS = [2, 1, 2, 3, 1, 2, 1, 2, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2];
 
@@ -49,6 +50,7 @@ const LibraryCardBarcode = () => {
 
 const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResponse }) => {
   const router = useRouter();
+  const { canEdit } = usePermissions();
   const userData = userResponse?.data || {};
 
   const user = {
@@ -465,14 +467,16 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
                   <div className="w-28 h-28 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                     <ImageWidget src={displayImageUrl} alt={user.userName} className="w-full h-full object-cover rounded-md" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={triggerProfileImageSelect}
-                    className="mt-3 p-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-600"
-                    title={user.profileImage || profileImageUrl ? 'Edit' : 'Upload'}
-                  >
-                    {user.profileImage || profileImageUrl ? <SquarePen className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                  </button>
+                  {canEdit("Users") && (
+                    <button
+                      type="button"
+                      onClick={triggerProfileImageSelect}
+                      className="mt-3 p-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-600"
+                      title={user.profileImage || profileImageUrl ? 'Edit' : 'Upload'}
+                    >
+                      {user.profileImage || profileImageUrl ? <SquarePen className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                    </button>
+                  )}
                   <p className="text-xs text-gray-500 mt-2 whitespace-nowrap">Only support .jpg, .png and .svg</p>
                 </div>
               </div>
@@ -482,7 +486,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
                   <Switch
                     checked={isStatusActive}
                     onCheckedChange={handleStatusToggle}
-                    disabled={isStatusChangePending}
+                    disabled={isStatusChangePending || !canEdit("Users")}
                     className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
                   />
                 </div>
@@ -493,14 +497,16 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
               <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
                 <div className="flex items-center mb-4 gap-2">
                   <h3 className="text-sm font-semibold text-gray-900">User Details</h3>
-                  <button
-                    type="button"
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 border border-gray-200"
-                    title="Edit"
-                    onClick={() => setIsUserDetailsEditing(true)}
-                  >
-                    <SquarePen className="w-4 h-4" />
-                  </button>
+                  {canEdit("Users") && (
+                    <button
+                      type="button"
+                      className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 border border-gray-200"
+                      title="Edit"
+                      onClick={() => setIsUserDetailsEditing(true)}
+                    >
+                      <SquarePen className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <FormInput

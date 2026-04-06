@@ -10,8 +10,11 @@ import { Plus, SquarePen } from 'lucide-react';
 import { useState } from 'react';
 import SettingsViewNavigation from '../utils/settingsViewNavigation';
 import PolicyFormDialog from './utils/policyFormDialog';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const PolicySection = ({ response }) => {
+    const { canAnyAdd, canAnyEdit } = usePermissions();
+    const settingsPerms = ["Settings", "Policy"];
     console.log(response);
     const breadcrumbs = [
         { label: 'Settings', href: '/settings' },
@@ -133,7 +136,7 @@ const PolicySection = ({ response }) => {
                 );
             },
         },
-        {
+        ...(canAnyEdit(settingsPerms) ? [{
             key: "actions",
             label: "Actions",
             sortable: false,
@@ -149,7 +152,7 @@ const PolicySection = ({ response }) => {
                     </button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     return (
@@ -166,13 +169,15 @@ const PolicySection = ({ response }) => {
                             onSearch={handleSearch}
                             className="w-full sm:w-60 rounded-[14px]!"
                         />
-                        <ButtonWidget
-                            onClick={handleAddNew}
-                            className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-                        >
-                            <Plus className="w-4 h-4 text-white" />
-                            Add Policy
-                        </ButtonWidget>
+                        {canAnyAdd(settingsPerms) && (
+                            <ButtonWidget
+                                onClick={handleAddNew}
+                                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4 text-white" />
+                                Add Policy
+                            </ButtonWidget>
+                        )}
                         <PolicyFormDialog
                             isOpen={isDialogOpen}
                             onOpenChange={handleDialogOpenChange}

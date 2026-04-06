@@ -16,6 +16,7 @@ import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek 
 import UserDialog from './utils/userFormDialog';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
 import UserStatusFilter from './utils/UserStatusFilter';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const formatJoiningDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -58,6 +59,7 @@ const dateRangeFromFilterType = (typeNum) => {
 
 const UserSection = ({ response: apiResponse, policyDropdown }) => {
   const router = useRouter();
+  const { canAdd } = usePermissions();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -294,13 +296,15 @@ const UserSection = ({ response: apiResponse, policyDropdown }) => {
               }
             />
             <UserStatusFilter />
-            <ButtonWidget
-              onClick={handleAddNew}
-              className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4 text-white" />
-              Add User
-            </ButtonWidget>
+            {canAdd("Users") && (
+              <ButtonWidget
+                onClick={handleAddNew}
+                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4 text-white" />
+                Add User
+              </ButtonWidget>
+            )}
             <UserDialog
               isOpen={isDialogOpen}
               onOpenChange={handleDialogOpenChange}

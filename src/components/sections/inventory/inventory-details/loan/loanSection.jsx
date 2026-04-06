@@ -13,6 +13,7 @@ import { ArrowLeft, Book, Calendar, FileText, Info, RefreshCw, Settings, User } 
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { useReturnBook, useRenewBook } from '@/store/hooks/CirculationHooks';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import InventoryDetailsNavigation from '../utils/inventoryDetailsNavigation';
 import ReturnDialog from './utils/returnDialog';
@@ -28,6 +29,8 @@ import RenewSuccessDialog from '@/components/sections/inventory/inventory-detail
 
 const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
     const router = useRouter();
+    const { canAnyEdit } = usePermissions();
+    const loanPerms = ["Inventory", "Loans"];
     const { mutateAsync: returnBookApi } = useReturnBook();
     const { mutateAsync: renewBookApi } = useRenewBook();
     const { showErrorToast } = useErrorHandler();
@@ -355,7 +358,7 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
             },
         },
        
-        {
+        ...(canAnyEdit(loanPerms) ? [{
             key: "actions",
             label: "Actions",
             sortable: false,
@@ -422,20 +425,10 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
                         >
                             <RefreshCw className="w-4 h-4" />
                         </ButtonWidget>
-                        {/* <ButtonWidget
-                            onClick={() => handleRowToggle(record.id)}
-                            className="h-8 w-8 p-0 rounded-sm bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center flex-shrink-0"
-                        >
-                            {isExpanded ? (
-                                <ChevronUp className="w-4 h-4 text-gray-600" />
-                            ) : (
-                                <ChevronDown className="w-4 h-4 text-gray-600" />
-                            )}
-                        </ButtonWidget> */}
                     </div>
                 );
             },
-        },
+        }] : []),
     ];
 
     const renderExpandedContent = (record) => {

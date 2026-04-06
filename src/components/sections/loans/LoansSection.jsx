@@ -18,6 +18,7 @@ import { getLoanActionTypeColor } from '@/helpers/FuntionalHelpers';
 import RenewLimitReachedModal from './utils/RenewLimitReachedModal';
 import { useReturnBook, useRenewBook } from '@/store/hooks/CirculationHooks';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -26,6 +27,7 @@ import icon3Svg from '@/assets/icons/16.svg';
 const LoansSection = ({ response }) => {
 
   const router = useRouter();
+  const { canEdit } = usePermissions();
   const { mutateAsync: returnBookApi, isPending: isReturningBook } = useReturnBook();
   const { mutateAsync: renewBookApi, isPending: isRenewingBook } = useRenewBook();
   const { showErrorToast } = useErrorHandler();
@@ -305,7 +307,7 @@ const LoansSection = ({ response }) => {
         </span>
       ),
     },
-    {
+    ...(canEdit("Loans") ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -371,7 +373,7 @@ const LoansSection = ({ response }) => {
           </div>
         );
       },
-    },
+    }] : []),
   ];
 
   const breadcrumbs = [

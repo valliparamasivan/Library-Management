@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
 import { getUserStatusColor } from "@/helpers/FuntionalHelpers";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 
 const EMPLOYEE_MOCK = {
   1: {
@@ -51,6 +52,8 @@ const roleOptions = [
 
 const EmployeeDetailsSection = ({ id }) => {
   const router = useRouter();
+  const { canAnyEdit } = usePermissions();
+  const settingsPerms = ["Settings", "Employees"];
   const employee = getEmployeeById(id);
   const [isStatusActive, setIsStatusActive] = useState(employee.status);
   const [isDetailsEditing, setIsDetailsEditing] = useState(false);
@@ -160,14 +163,16 @@ const EmployeeDetailsSection = ({ id }) => {
                     <ImageWidget src={userImage} alt={employee.employeeName} className="w-full h-full object-cover rounded-lg" />
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={triggerProfileImageSelect}
-                  className="mt-3 p-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-600"
-                  title={profileImageUrl ? "Change" : "Upload"}
-                >
-                  {profileImageUrl ? <SquarePen className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                </button>
+                {canAnyEdit(settingsPerms) && (
+                  <button
+                    type="button"
+                    onClick={triggerProfileImageSelect}
+                    className="mt-3 p-2 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-600"
+                    title={profileImageUrl ? "Change" : "Upload"}
+                  >
+                    {profileImageUrl ? <SquarePen className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                  </button>
+                )}
                 <p className="text-xs text-gray-500 mt-1">Only support .jpg, .png and .svg</p>
               </div>
             </div>
@@ -177,6 +182,7 @@ const EmployeeDetailsSection = ({ id }) => {
                 <Switch
                   checked={isStatusActive}
                   onCheckedChange={setIsStatusActive}
+                  disabled={!canAnyEdit(settingsPerms)}
                   className="data-[state=checked]:bg-[#00796B] data-[state=unchecked]:bg-gray-300"
                 />
               </div>
@@ -187,14 +193,16 @@ const EmployeeDetailsSection = ({ id }) => {
           <div className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900">Employee Details</h3>
-              <button
-                type="button"
-                className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 border border-gray-200"
-                title="Edit"
-                onClick={() => setIsDetailsEditing(true)}
-              >
-                <SquarePen className="w-4 h-4" />
-              </button>
+              {canAnyEdit(settingsPerms) && (
+                <button
+                  type="button"
+                  className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 border border-gray-200"
+                  title="Edit"
+                  onClick={() => setIsDetailsEditing(true)}
+                >
+                  <SquarePen className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <div className="space-y-2">
               <FormInput

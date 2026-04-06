@@ -5,6 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import PermissionGuard from "@/components/guards/PermissionGuard";
 
 const MainLayout = ({ children }) => {
   const { data: session, status } = useSession();
@@ -31,7 +32,7 @@ const MainLayout = ({ children }) => {
   return (
     <SidebarProvider>
       <MainSidebar />
-      {children}
+      <PermissionGuard>{children}</PermissionGuard>
     </SidebarProvider>
   );
 };

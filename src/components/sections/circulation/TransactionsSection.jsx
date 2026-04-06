@@ -18,6 +18,7 @@ import TransferDialog from "./utils/transferDialog";
 import TransferSuccessDialog from "./utils/transferSuccessDialog";
 import RenewBookDueDateDialog from "./utils/renewBookDueDateDialog";
 import RenewSuccessDialog from "./utils/renewSuccessDialog";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 import RenewLimitReachedModal from "./utils/RenewLimitReachedModal";
 import { useGetUserTransactions, useSearchBookOrUser, useReturnBook, useRenewBook } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
@@ -40,6 +41,8 @@ const getTransactionStatusClass = (status) => {
 
 const TransactionsSection = () => {
   const router = useRouter();
+  const { canAnyEdit } = usePermissions();
+  const circulationPerms = ["Circulation", "Active Transactions"];
   const searchParams = useSearchParams();
   const userIdParam = searchParams.get("userId");
   const internalUserIdParam = searchParams.get("internalUserId");
@@ -324,7 +327,7 @@ const TransactionsSection = () => {
         </span>
       ),
     },
-    {
+    ...(canAnyEdit(circulationPerms) ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -365,7 +368,7 @@ const TransactionsSection = () => {
           </div>
         );
       },
-    },
+    }] : []),
   ];
 
 

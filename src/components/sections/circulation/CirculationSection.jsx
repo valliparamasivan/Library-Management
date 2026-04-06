@@ -13,6 +13,7 @@ import ImageWidget from "@/components/widgets/ImageWidget";
 import BookFilter from "./utils/BookFilter";
 import TableWidget from "@/components/widgets/TableWidget";
 import useURLParams from "@/components/custom-hooks/useURLParams";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 import { useSearchBookOrUser, useGetUserTransactions, useReturnBook, useRenewBook, useScanUser } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 import userImage from '@/assets/image/user.png';
@@ -42,6 +43,8 @@ const getTransactionStatusClass = (status) => {
 
 const CirculationSection = () => {
   const router = useRouter();
+  const { canAnyEdit } = usePermissions();
+  const circulationPerms = ["Circulation", "Active Transactions"];
 
   const { control, watch, reset } = useForm({
     defaultValues: { userOrBookRfid: "" },
@@ -179,6 +182,15 @@ const CirculationSection = () => {
           return;
         }
 
+        const parseYear = (val) => {
+          if (!val) return null;
+          const str = String(val).trim();
+          if (!str) return null;
+          if (/^\d{4}$/.test(str)) return str;
+          const match = str.match(/^(\d{4})/);
+          return match ? match[1] : str;
+        };
+
         const mappedAvailableBooks = availableBooks.map((book) => ({
           bookId: book.bookId,
           bookCopyId: book.bookCopyId,
@@ -186,11 +198,11 @@ const CirculationSection = () => {
           title: book.title,
           author: book.author,
           isbn: book.isbn,
-          year: book.year || "N/A",
+          year: parseYear(book.year),
           totalCopies: book.totalCopies || 0,
           issuedCopies: book.issuedCopies || 0,
           availableCopies: ((book.totalCopies || 0) - (book.issuedCopies || 0)) + "/" + (book.totalCopies || 0),
-          bookImageUrl: book.bookImageUrl,
+          bookImageUrl: book.bookImageUrl ? `https://libraryapi.corpfield.com/books-image/${book.bookImageUrl}` : null,
         })).filter((book) => {
           const available = (book.totalCopies || 0) - (book.issuedCopies || 0);
           return available > 0;
@@ -204,8 +216,8 @@ const CirculationSection = () => {
               title: tx.title,
               author: tx.author,
               isbn: tx.isbn,
-              year: tx.year || "N/A",
-              bookImageUrl: tx.bookImageUrl,
+              year: parseYear(tx.year),
+              bookImageUrl: tx.bookImageUrl ? `https://libraryapi.corpfield.com/books-image/${tx.bookImageUrl}` : null,
               transactions: [],
             };
           }
@@ -509,7 +521,7 @@ const CirculationSection = () => {
         </span>
       ),
     },
-    {
+    ...(canAnyEdit(circulationPerms) ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -549,7 +561,7 @@ const CirculationSection = () => {
           </div>
         );
       },
-    },
+    }] : []),
   ];
 
   return (
@@ -904,11 +916,17 @@ const CirculationSection = () => {
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                        <ImageWidget
-                          src={book.bookImageUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop"}
-                          alt={book.title}
-                          className="w-full h-full object-cover"
-                        />
+                        {book.bookImageUrl ? (
+                          <ImageWidget
+                            src={book.bookImageUrl}
+                            alt={book.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            <BookOpen className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -998,7 +1016,7 @@ const CirculationSection = () => {
                           <div className="flex items-start gap-3">
                             <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                               <ImageWidget
-                                src={book.bookImageUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop"}
+                                src={book.bookImageUrl || ""}
                                 alt={book.title}
                                 className="w-full h-full object-cover"
                               />
@@ -1099,7 +1117,7 @@ const CirculationSection = () => {
                         <div className="flex items-start gap-3 mb-4">
                           <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                             <ImageWidget
-                              src={book.bookImageUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop"}
+                              src={book.bookImageUrl || ""}
                               alt={book.title}
                               className="w-full h-full object-cover"
                             />

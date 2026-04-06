@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import userImage from "@/assets/image/user.png";
 import actionIcon from "@/assets/icons/19.svg";
 import { getUserStatusColor } from "@/helpers/FuntionalHelpers";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 import TransactionStatusFilter from "./utils/transactionStatusFilter";
 import TransferDialog from "./utils/transferDialog";
 import TransferSuccessDialog from "./utils/transferSuccessDialog";
@@ -52,6 +53,8 @@ const getTransactionStatusClass = (status) => {
 
 const CheckInTransactionsSection = () => {
   const router = useRouter();
+  const { canAnyEdit } = usePermissions();
+  const circulationPerms = ["Circulation", "Active Transactions"];
   const user = USER_MOCK;
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [selectedItemForTransfer, setSelectedItemForTransfer] = useState(null);
@@ -203,7 +206,7 @@ const CheckInTransactionsSection = () => {
         </span>
       ),
     },
-    {
+    ...(canAnyEdit(circulationPerms) ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -244,7 +247,7 @@ const CheckInTransactionsSection = () => {
           </div>
         );
       },
-    },
+    }] : []),
   ];
 
 

@@ -50,7 +50,7 @@ export default withAuth(
       return NextResponse.redirect(new URL("/customer-dashboard", req.url));
     }
 
-    if (isAuthenticated && isHomePage && userRole === "Admin") {
+    if (isAuthenticated && isHomePage && userRole !== "User") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
@@ -67,9 +67,9 @@ export default withAuth(
     }
 
     if (isAuthenticated && isAuthPublicRoute) {
-      if (userRole === "Admin") {
+      if (userRole !== "User") {
         return NextResponse.redirect(new URL("/dashboard", req.url));
-      } else if (userRole === "User") {
+      } else {
         return NextResponse.redirect(new URL("/customer-dashboard", req.url));
       }
     }
@@ -101,7 +101,7 @@ export default withAuth(
         signInUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(signInUrl);
       }
-      if (userRole !== "Admin") {
+      if (userRole === "User") {
         return NextResponse.redirect(new URL("/customer-dashboard", req.url));
       }
     }

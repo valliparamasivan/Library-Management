@@ -82,7 +82,7 @@ export async function getLoanList(searchParams) {
 }
 
 export async function getBookList(searchParams) {
-  return getList("/books/book-list", "title", { sortOrder: "asc", ...searchParams });
+  return getList("/books/book-list", "title", searchParams);
 }
 
 export async function getBookDetailsById(id) {

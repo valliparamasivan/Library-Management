@@ -14,9 +14,11 @@ import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 import { useEmployeeCreate, useEmployeeUpdate } from "@/store/hooks/SettingsHooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeData }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [profileImageUrl, setProfileImageUrl] = useState(null);
   const { control, handleSubmit, reset, setError, formState: { isSubmitting } } = useForm({
     resolver: zodResolver(EmployeeFormSchema),
@@ -97,6 +99,7 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
         || response?.message
         || (id ? "Employee updated successfully" : "Employee created successfully");
       showSuccessToast(successMsg);
+      queryClient.invalidateQueries({ queryKey: ["adminProfile"] });
       handleCancel();
       router.refresh();
     } catch (error) {

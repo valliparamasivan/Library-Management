@@ -4,8 +4,8 @@ import { authOptions } from "./api/auth/[...nextauth]/route";
 
 const Initial = async () => {
   const session = await getServerSession(authOptions);
-  
-  if (session?.user?.role === "Admin") {
+
+  if (session?.user?.role && session?.user?.role !== "User") {
     redirect("/dashboard");
   } else if (session?.user?.role === "User") {
     redirect("/customer-dashboard");

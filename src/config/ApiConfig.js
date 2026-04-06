@@ -38,6 +38,17 @@ clientAxios.interceptors.response.use(
       window.location.href = `/?unauthorised=true`;
     }
 
+    if (error.response?.status === 403) {
+      const message = error.response?.data?.message || "You do not have permission to perform this action";
+      return Promise.reject({
+        ...error,
+        response: error.response,
+        data: { message },
+        status: 403,
+        statusText: "Forbidden",
+      });
+    }
+
     return Promise.reject({
       ...error,
       response: error.response,
