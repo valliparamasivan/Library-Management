@@ -1,53 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Bell, Clock, BookOpen, CheckCircle2, CircleAlert, ArrowRight } from "lucide-react";
 import { useRouter } from "nextjs-toploader/app";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  useCustomerNotifications, 
-  useMarkNotificationRead, 
-  useMarkAllNotificationsRead 
+import {
+  useCustomerNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead
 } from "@/store/customerHooks/AuthHooks";
 
 export const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const { data: notificationsResponse, refetch } = useCustomerNotifications();
-  const [notifications, setNotifications] = useState([]);
-  
+  const { data: notificationsResponse } = useCustomerNotifications();
+
   const { mutate: markRead } = useMarkNotificationRead();
   const { mutate: markAllRead } = useMarkAllNotificationsRead();
 
-  useEffect(() => {
-    if (notificationsResponse?.data) {
-      const mapped = notificationsResponse.data.slice(0, 5).map((n) => {
-        let icon = Bell, iconBg = "bg-gray-100", iconColor = "text-gray-600", title = "Notification";
-        if (n.type === 'DUE') {
-          icon = Clock; iconBg = "bg-orange-100"; iconColor = "text-orange-600"; title = "Book Due Soon";
-        } else if (n.type === 'OVERDUE') {
-          icon = CircleAlert; iconBg = "bg-red-100"; iconColor = "text-red-600"; title = "Overdue Book";
-        }
-        return {
-          id: n.notificationId,
-          title,
-          message: n.message,
-          time: new Date(n.createdAt).toLocaleDateString(),
-          unread: !n.read,
-          icon,
-          iconBg,
-          iconColor
-        };
-      });
-      setNotifications(mapped);
-    }
+  const notifications = useMemo(() => {
+    if (!notificationsResponse?.data) return [];
+    return notificationsResponse.data.slice(0, 5).map((n) => {
+      let icon = Bell, iconBg = "bg-gray-100", iconColor = "text-gray-600", title = "Notification";
+      if (n.type === 'DUE') {
+        icon = Clock; iconBg = "bg-orange-100"; iconColor = "text-orange-600"; title = "Book Due Soon";
+      } else if (n.type === 'OVERDUE') {
+        icon = CircleAlert; iconBg = "bg-red-100"; iconColor = "text-red-600"; title = "Overdue Book";
+      }
+      return {
+        id: n.notificationId,
+        title,
+        message: n.message,
+        time: new Date(n.createdAt).toLocaleDateString(),
+        unread: !n.read,
+        icon,
+        iconBg,
+        iconColor
+      };
+    });
   }, [notificationsResponse]);
 
   const unreadCount = notificationsResponse?.data?.filter((n) => !n.read)?.length || 0;
 
   const handleNotificationClick = (notification) => {
     if (notification.unread) {
-      markRead(notification.id, { onSuccess: () => refetch() });
+      markRead(notification.id);
     }
     router.push("/notification");
     setIsOpen(false);
@@ -59,12 +56,7 @@ export const NotificationDropdown = () => {
   };
 
   const handleMarkAllAsRead = () => {
-    markAllRead(undefined, {
-      onSuccess: () => {
-        refetch();
-        setIsOpen(false);
-      }
-    });
+    markAllRead(undefined, { onSuccess: () => setIsOpen(false) });
   };
 
   return (

@@ -366,13 +366,14 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
             lgMinWidth: "160px",
             render: (record, index, isExpanded, handleRowToggle) => {
                 const status = (record.status || "").toLowerCase();
-                const isReturnDisabled = status === "returned";
+                const isCheckedIn = ["checked-in", "check-in", "returned"].includes(status);
+                const isReturnDisabled = isCheckedIn;
 
                 const renewalCurrent = Number(record.renewalCount ?? 0);
                 const renewalMax = Number(record.maxRenewals ?? 0);
                 const isRenewLimitReached = renewalMax > 0 && renewalCurrent >= renewalMax;
 
-                const isRenewDisabledByStatus = ["returned", "renewed", "overdue", "reserved"].includes(status);
+                const isRenewDisabledByStatus = isCheckedIn || ["overdue", "reserved"].includes(status);
                 const isRenewDisabled = isRenewDisabledByStatus || isRenewLimitReached;
 
                 const handleReturnClick = () => {

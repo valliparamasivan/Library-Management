@@ -315,17 +315,18 @@ const LoansSection = ({ response }) => {
       lgMinWidth: "120px",
       render: (record) => {
         const status = (record.status || "").toLowerCase();
-        const isReturnDisabled = ["on-time", "returned"].includes(status);
+        const isCheckedIn = ["checked-in", "check-in", "returned"].includes(status);
+        const isReturnDisabled = isCheckedIn;
         const { current, max } = parseRenewalCount(record.renewalCount);
         const isRenewLimitReached = current >= max;
-        const isRenewDisabled = ["on-time", "returned", "checked-in", "overdue", "reserved"].includes(status) || isRenewLimitReached;
+        const isRenewDisabled = isCheckedIn || ["overdue", "reserved"].includes(status) || isRenewLimitReached;
 
         const handleReturnClick = () => {
           handleCheckInClick(record);
         };
 
         const onRenewClick = () => {
-          if (isRenewLimitReached || ["on-time", "returned", "checked-in", "overdue", "reserved"].includes(status)) {
+          if (isRenewDisabled) {
             setRenewLimitUser({
               userName: record.userName || "",
               userDetailId: record.userId || "",

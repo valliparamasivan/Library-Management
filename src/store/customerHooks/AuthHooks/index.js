@@ -3,7 +3,7 @@ import {
   customerProfileUpdate, customerSetGoal, getCustomerProfileDetails, getCustomerNotifications,
   markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotifications
 } from "@/store/customerServices/AuthServices";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useCustomerLogin = () => {
   return useMutation({
@@ -57,17 +57,33 @@ export const useCustomerNotifications = () => {
 };
 
 export const useMarkNotificationRead = () => {
-  return useMutation({ mutationFn: (id) => markNotificationAsRead(id) });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => markNotificationAsRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customerNotifications'] }),
+  });
 };
 
 export const useMarkAllNotificationsRead = () => {
-  return useMutation({ mutationFn: () => markAllNotificationsAsRead() });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => markAllNotificationsAsRead(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customerNotifications'] }),
+  });
 };
 
 export const useDeleteNotification = () => {
-  return useMutation({ mutationFn: (id) => deleteNotification(id) });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteNotification(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customerNotifications'] }),
+  });
 };
 
 export const useDeleteAllNotifications = () => {
-  return useMutation({ mutationFn: () => deleteAllNotifications() });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => deleteAllNotifications(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customerNotifications'] }),
+  });
 };
