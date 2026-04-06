@@ -2,7 +2,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { HEADER } from "@/helpers/ConstantHelper";
 import axios from "axios";
 import { getServerSession } from "next-auth";
-import { getSession } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 const baseConfiguration = {
   baseURL: process.env.BASE_URL,
@@ -35,7 +36,8 @@ clientAxios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = `/?unauthorised=true`;
+      signOut({ callbackUrl: "/sign-in" });
+      return Promise.reject(error);
     }
 
     if (error.response?.status === 403) {
@@ -79,5 +81,10 @@ serverAxios.interceptors.request.use(
 
 serverAxios.interceptors.response.use(
   (response) => response.data,
-  (error) => Promise.reject(error?.response?.data),
+  (error) => {
+    if (error.response?.status === 401) {
+      redirect("/sign-in");
+    }
+    return Promise.reject(error?.response?.data);
+  },
 );
