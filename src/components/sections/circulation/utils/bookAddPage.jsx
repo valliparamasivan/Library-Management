@@ -30,6 +30,17 @@ const BookAddPage = () => {
     try {
       const response = await searchBookApi({ type: 2, searchKey: searchValue.trim(), loanFilter: "AVAILABLE" });
       const data = response?.data || {};
+
+      let pendingRfids = new Set();
+      try {
+        const stored = JSON.parse(sessionStorage.getItem("checkoutItems") || "[]");
+        pendingRfids = new Set(
+          stored.map((item) => item.refId).filter(Boolean)
+        );
+      } catch {
+        // ignore parse errors
+      }
+
       const mapped = (data.availableBooks || []).map((book) => ({
           bookId: book.bookId,
           bookCopyId: book.bookCopyId,
@@ -42,7 +53,9 @@ const BookAddPage = () => {
           issuedCopies: book.issuedCopies ?? 0,
           availableCopies: ((book.totalCopies ?? 0) - (book.issuedCopies ?? 0)),
           bookImageUrl: book.bookImageUrl,
-      })).filter((book) => book.availableCopies > 0);
+      }))
+        .filter((book) => book.availableCopies > 0)
+        .filter((book) => !pendingRfids.has(book.rfid));
       setSearchResults({ availableBooks: mapped });
     } catch (error) {
       showErrorToast(error);

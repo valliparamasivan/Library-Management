@@ -269,29 +269,7 @@ const CheckoutSection = () => {
 
         <div className="min-w-0 h-full">
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm h-full min-h-[320px] flex flex-col relative p-6">
-            {!showCheckoutItems ? (
-              <>
-                <div className="flex-1 flex flex-col items-center justify-center">
-                  <p className="text-base text-gray-500 mb-6 text-center">Scan Books to Check-Out</p>
-                  <button
-                    type="button"
-                    onClick={() => setShowCheckoutItems(true)}
-                    className="w-20 h-20 rounded-lg bg-[#B3DDB580] flex items-center justify-center cursor-pointer hover:bg-[#B3DDB5]/60 transition-colors"
-                  >
-                    <ScanLine className="w-10 h-10 text-[#00796B]" strokeWidth={1.5} />
-                  </button>
-                </div>
-                <div className="absolute bottom-6 left-6">
-                  <ButtonWidget
-                    type="button"
-                    onClick={() => router.push("/circulation")}
-                    className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg px-5 py-2"
-                  >
-                    Cancel
-                  </ButtonWidget>
-                </div>
-              </>
-            ) : (
+            { (
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-sm font-semibold text-gray-900">Check-Out Items</h2>

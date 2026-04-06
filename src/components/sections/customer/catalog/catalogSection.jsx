@@ -35,7 +35,16 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
   const { mutateAsync: addFavorite } = useAddFavorite();
   const { showSuccessToast, showErrorToast } = useErrorHandler();
   const [searchQuery, setSearchQuery] = useState(searchParams?.get('search') || searchParams?.get('searchKey') || "");
-  const [sortBy, setSortBy] = useState(searchParams?.get('sortField') || "relevance");
+  const getSortByFromParams = () => {
+    const sortField = searchParams?.get('sortField');
+    if (!sortField) return 'relevance';
+    if (sortField === 'title') return 'title';
+    if (sortField === 'author') return 'author';
+    if (sortField === 'year_published') return 'newest';
+    if (sortField === 'rating') return 'rating';
+    return 'relevance';
+  };
+  const [sortBy, setSortBy] = useState(getSortByFromParams());
   const [selectedGenre, setSelectedGenre] = useState(searchParams?.get('categoryName') || searchParams?.get('genre') || "All Books");
   const availableParam = searchParams?.get('available');
   const [availableOnly, setAvailableOnly] = useState(availableParam === 'false' ? false : true);
@@ -84,7 +93,7 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
   const { control, watch, setValue, getValues } = useForm({
     defaultValues: {
       search: searchQuery || "",
-      sortBy: "relevance",
+      sortBy: sortBy,
     },
   });
 
@@ -225,6 +234,11 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
       ? selectedLanguage.filter((l) => l !== lang)
       : [...selectedLanguage, lang];
     setSelectedLanguage(newLanguages);
+    setCurrentPage(1);
+    updateURLParams({
+      language: newLanguages.length > 0 ? newLanguages.join(',') : null,
+      page: null,
+    });
   };
 
   const handleYearToggle = (year) => {
@@ -232,24 +246,17 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
       ? selectedYears.filter((y) => y !== year)
       : [...selectedYears, year];
     setSelectedYears(newYears);
-  };
-
-  const handleFilter = () => {
     setCurrentPage(1);
-    const available = availableOnly ? 'true' : 'false';
-    updateURLParams({ 
-      language: selectedLanguage.length > 0 ? selectedLanguage.join(',') : null,
-      year: selectedYears.length > 0 ? selectedYears.join(',') : null,
-      available,
-      page: null
+    updateURLParams({
+      year: newYears.length > 0 ? newYears.join(',') : null,
+      page: null,
     });
-    setIsFilterOpen(false);
   };
 
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
     setCurrentPage(1);
-    updateURLParams({ 
+    updateURLParams({
       categoryName: genre !== "All Books" ? genre : null,
       page: null
     });
@@ -257,6 +264,11 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
 
   const handleAvailableChange = (value) => {
     setAvailableOnly(value);
+    setCurrentPage(1);
+    updateURLParams({
+      available: value ? 'true' : 'false',
+      page: null,
+    });
   };
 
   const handleReset = () => {
@@ -507,7 +519,6 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
               selectedYears={selectedYears}
               onYearChange={handleYearToggle}
               onReset={handleReset}
-              onFilter={handleFilter}
               languages={availableLanguages}
             />
           </aside>
@@ -547,7 +558,6 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
                         selectedYears={selectedYears}
                         onYearChange={handleYearToggle}
                         onReset={handleReset}
-                        onFilter={handleFilter}
                         languages={availableLanguages}
                       />
                     </div>

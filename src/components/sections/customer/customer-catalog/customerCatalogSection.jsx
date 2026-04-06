@@ -246,6 +246,11 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
       ? selectedLanguage.filter((l) => l !== lang)
       : [...selectedLanguage, lang];
     setSelectedLanguage(newLanguages);
+    setCurrentPage(1);
+    updateURLParams({
+      language: newLanguages.length > 0 ? newLanguages.join(',') : null,
+      page: null,
+    });
   };
 
   const handleYearToggle = (year) => {
@@ -253,23 +258,17 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
       ? selectedYears.filter((y) => y !== year)
       : [...selectedYears, year];
     setSelectedYears(newYears);
-  };
-
-  const handleFilter = () => {
     setCurrentPage(1);
     updateURLParams({
-      language: selectedLanguage.length > 0 ? selectedLanguage.join(',') : null,
-      year: selectedYears.length > 0 ? selectedYears.join(',') : null,
-      available: availableOnly ? 'true' : 'null',
-      page: null
+      year: newYears.length > 0 ? newYears.join(',') : null,
+      page: null,
     });
-    setIsFilterOpen(false);
   };
 
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
     setCurrentPage(1);
-    updateURLParams({ 
+    updateURLParams({
       categoryName: genre !== "All Books" ? genre : null,
       page: null
     });
@@ -277,6 +276,11 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
 
   const handleAvailableChange = (value) => {
     setAvailableOnly(value);
+    setCurrentPage(1);
+    updateURLParams({
+      available: value ? 'true' : 'false',
+      page: null,
+    });
   };
 
   const handleReset = () => {
@@ -524,7 +528,6 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
               selectedYears={selectedYears}
               onYearChange={handleYearToggle}
               onReset={handleReset}
-              onFilter={handleFilter}
               languages={availableLanguages}
             />
           </aside>
@@ -564,7 +567,6 @@ const CustomerCatalogSection = ({ booksList, languages, bookCategories }) => {
                         selectedYears={selectedYears}
                         onYearChange={handleYearToggle}
                         onReset={handleReset}
-                        onFilter={handleFilter}
                         languages={availableLanguages}
                       />
                     </div>

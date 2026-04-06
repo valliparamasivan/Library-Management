@@ -55,6 +55,16 @@ const HomeSection = ({ response, languages, bookCategories }) => {
   const responseData = response?.data || response || {};
   const topRatedData = responseData?.topRated || [];
   const newArrivalsData = responseData?.newArrivals || [];
+  const totalBooksAvailable = responseData?.totalBooksAvailable ?? 0;
+
+  const formatBookCount = (count) => {
+    const n = Number(count) || 0;
+    if (n >= 1000) {
+      const rounded = Math.floor(n / 1000) * 1000;
+      return `${rounded.toLocaleString()}+`;
+    }
+    return n.toLocaleString();
+  };
 
   const topRated = topRatedData.map(mapTopRatedBook);
   const newArrivals = newArrivalsData.map(mapNewArrivalBook);
@@ -82,7 +92,7 @@ const HomeSection = ({ response, languages, bookCategories }) => {
   const valueProps = [
     {
       icon: BookOpen,
-      title: '50,000+ Books',
+      title: `${formatBookCount(totalBooksAvailable)} Books`,
       description: 'Physical books, eBooks, and audiobooks across all genres',
       color: 'primary'
     },
@@ -163,7 +173,7 @@ const HomeSection = ({ response, languages, bookCategories }) => {
               </h1>
 
               <span className="text-md md:text-md text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Dive into 50,000+ stories, open to everyone
+                Dive into {formatBookCount(totalBooksAvailable)} stories, open to everyone
               </span>
 
               <div className="mb-4 mt-6">

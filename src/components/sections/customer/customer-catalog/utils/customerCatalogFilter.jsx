@@ -6,7 +6,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Label } from "@/components/ui/label";
 import FormMultiSelect from "@/components/form/FormMultiSelect";
 import FormSwitch from "@/components/form/FormSwitch";
-import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { ChevronDown } from "lucide-react";
 import filter from "@/assets/icons/13.svg";
 import ImageWidget from "@/components/widgets/ImageWidget";
@@ -19,7 +18,6 @@ const CustomerCatalogFilter = ({
   selectedYears,
   onYearChange,
   onReset,
-  onFilter,
   languages = [],
 }) => {
   const [isLanguageOpen, setIsLanguageOpen] = useState(true);
@@ -171,8 +169,6 @@ const CustomerCatalogFilter = ({
           className="px-3 py-2 bg-white border border-[#0b63ce]/30 rounded-lg focus:border-[#0b63ce] focus:outline-none focus:ring-2 focus:ring-[#0b63ce]/20 text-sm font-medium min-h-[44px]"
         />
       </div>
-
-      <ButtonWidget onClick={onFilter} className="w-full bg-[#0b63ce] hover:bg-[#0a5ab8] text-white font-semibold py-2 rounded-lg">Filter</ButtonWidget>
     </div>
   );
 };

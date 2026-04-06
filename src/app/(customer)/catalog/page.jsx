@@ -25,8 +25,8 @@ const CatalogPage = async ({ searchParams }) => {
     if (params?.year) {
         apiParams.year = params.year;
     }
-    if (params?.available === 'true' || params?.available === 'false') {
-        apiParams.available = params.available === 'true';
+    if (params?.available !== 'false') {
+        apiParams.available = true;
     }
 
     Object.keys(apiParams).forEach(key => {
