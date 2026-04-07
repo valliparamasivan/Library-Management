@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { bookCategoryCreate, bookTypeCreate, languageCreate, bookCreate, bookUpdate, bookAddQuantity, bookChangeStatus, getShelfDropdown, getRowDropdown, assignLocation, editLocation, releaseRfid, reprintRfid, updateRfidPrintStatus } from "@/store/services/InventoryServices";
+import { bookCategoryCreate, bookTypeCreate, languageCreate, bookCreate, bookUpdate, bookAddQuantity, bookChangeStatus, getShelfDropdown, getRowDropdown, assignLocation, editLocation, releaseRfid, reprintRfid, updateRfidPrintStatus, printRfidTagsZpl } from "@/store/services/InventoryServices";
 
 export const useBookCategoryCreate = () => {
     return useMutation({
@@ -86,5 +86,11 @@ export const useReprintRfid = () => {
 export const useUpdateRfidPrintStatus = () => {
     return useMutation({
       mutationFn: (rfidIds) => updateRfidPrintStatus(rfidIds),
+    });
+  };
+
+export const usePrintRfidTagsZpl = () => {
+    return useMutation({
+      mutationFn: (rfidTagIds) => printRfidTagsZpl(rfidTagIds),
     });
   };

@@ -11,7 +11,7 @@ const ROUTE_TO_PERMISSIONS = {
   "/loans": ["loans"],
   "/users": ["users"],
   "/settings": ["settings", "roles", "roles & permissions", "policy", "location", "employees"],
-  "/reports": ["reports", "report users", "report loans", "report inventory", "report users export", "report loans export", "report inventory export"],
+  "/reports": ["report users", "report loans", "report inventory"],
   "/activitylog": ["activity log"],
 };
 

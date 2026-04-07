@@ -8,8 +8,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import FormSelect from "@/components/form/FormSelect";
 import BarcodeDisplay from "./BarcodeDisplay";
-import { generateBarcodeHtml, openPrintWindow } from "./generateBarcodeHtml";
-import { useReprintRfid } from "@/store/hooks/InventoryHooks";
+import { useReprintRfid, usePrintRfidTagsZpl } from "@/store/hooks/InventoryHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
 const ReprintDialog = ({
@@ -26,8 +25,10 @@ const ReprintDialog = ({
             reason: "",
         },
     });
-    const { mutateAsync: reprintRfidApi, isPending } = useReprintRfid();
+    const { mutateAsync: reprintRfidApi, isPending: isReprintPending } = useReprintRfid();
+    const { mutateAsync: printZpl, isPending: isZplPending } = usePrintRfidTagsZpl();
     const { showSuccessToast, showErrorToast } = useErrorHandler();
+    const isPending = isReprintPending || isZplPending;
 
     const selectedReason = watch("reason");
 
@@ -63,7 +64,12 @@ const ReprintDialog = ({
         if (!selectedReason) return;
 
         if (currentRfid) {
-            openPrintWindow(generateBarcodeHtml(currentRfid), "Re-Print RFID Tag");
+            try {
+                await printZpl([currentRfid]);
+            } catch (error) {
+                showErrorToast(error?.data?.message || error?.message || "Failed to dispatch print job");
+                return;
+            }
         }
 
         if (rfidId) {

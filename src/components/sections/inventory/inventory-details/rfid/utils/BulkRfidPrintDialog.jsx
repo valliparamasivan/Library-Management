@@ -6,10 +6,9 @@ import { X } from "lucide-react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BarcodeDisplay from "./BarcodeDisplay";
-import { generateBarcodeHtml, openPrintWindow } from "./generateBarcodeHtml";
 import FormSelect from "@/components/form/FormSelect";
 import { useForm } from "react-hook-form";
-import { useUpdateRfidPrintStatus, useReprintRfid } from "@/store/hooks/InventoryHooks";
+import { useUpdateRfidPrintStatus, useReprintRfid, usePrintRfidTagsZpl } from "@/store/hooks/InventoryHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
 const reasonOptions = [
@@ -32,11 +31,12 @@ const BulkRfidPrintDialog = ({
   const router = useRouter();
   const { mutateAsync: updatePrintStatus, isPending: isPrintPending } = useUpdateRfidPrintStatus();
   const { mutateAsync: reprintRfidApi, isPending: isReprintPending } = useReprintRfid();
+  const { mutateAsync: printZpl, isPending: isZplPending } = usePrintRfidTagsZpl();
   const { showSuccessToast, showErrorToast } = useErrorHandler();
   const { control, watch, reset } = useForm({ defaultValues: { reason: "" } });
   const selectedReason = watch("reason");
 
-  const isPending = isPrintPending || isReprintPending;
+  const isPending = isPrintPending || isReprintPending || isZplPending;
   const hasReprintRecords = reprintRecords.length > 0;
   const reprintTags = reprintRecords.map((r) => r.rfidTagId).filter(Boolean);
   const allTags = [...tagsToPrint, ...reprintTags];
@@ -54,7 +54,12 @@ const BulkRfidPrintDialog = ({
   const handlePrint = async () => {
     if (allTags.length === 0) return;
 
-    openPrintWindow(allTags.map((tag) => generateBarcodeHtml(tag)), "Print RFID Tags");
+    try {
+      await printZpl(allTags);
+    } catch (error) {
+      showErrorToast(error?.data?.message || error?.message || "Failed to dispatch print job");
+      return;
+    }
 
     try {
       if (rfidIds.length > 0) {

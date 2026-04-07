@@ -5,14 +5,15 @@ import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BarcodeDisplay from "./BarcodeDisplay";
-import { generateBarcodeHtml, openPrintWindow } from "./generateBarcodeHtml";
-import { useUpdateRfidPrintStatus } from "@/store/hooks/InventoryHooks";
+import { useUpdateRfidPrintStatus, usePrintRfidTagsZpl } from "@/store/hooks/InventoryHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
 const PrintRfidTag = ({ isOpen, onOpenChange, rfidTagId, rfidId }) => {
     const router = useRouter();
-    const { mutateAsync: updatePrintStatus, isPending } = useUpdateRfidPrintStatus();
+    const { mutateAsync: updatePrintStatus, isPending: isStatusPending } = useUpdateRfidPrintStatus();
+    const { mutateAsync: printZpl, isPending: isPrintPending } = usePrintRfidTagsZpl();
     const { showSuccessToast, showErrorToast } = useErrorHandler();
+    const isPending = isStatusPending || isPrintPending;
 
     const handleClose = () => {
         onOpenChange(false);
@@ -20,7 +21,12 @@ const PrintRfidTag = ({ isOpen, onOpenChange, rfidTagId, rfidId }) => {
 
     const handlePrint = async () => {
         if (rfidTagId) {
-            openPrintWindow(generateBarcodeHtml(rfidTagId), "Print RFID Tag");
+            try {
+                await printZpl([rfidTagId]);
+            } catch (error) {
+                showErrorToast(error?.data?.message || error?.message || "Failed to dispatch print job");
+                return;
+            }
         }
 
         if (rfidId) {

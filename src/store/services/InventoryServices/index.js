@@ -82,3 +82,8 @@ export const updateRfidPrintStatus = async (rfidIds) => {
   });
   return data;
 };
+
+export const printRfidTagsZpl = async (rfidTagIds) => {
+  const { data } = await clientAxios.post("/zpl/dispatch", { rfidTagIds });
+  return data;
+};
