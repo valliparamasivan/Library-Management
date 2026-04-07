@@ -56,18 +56,18 @@ const InventoryGrid = ({ response, onEditClick }) => {
                     <span className={`inline-flex items-center px-4 py-1.5 text-xs font-medium rounded-sm ${getStatusColor(catalogActive ? "Active" : "Inactive")}`}>
                       {catalogActive ? "Active" : "Inactive"}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onEditClick) {
+                    {onEditClick && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onEditClick(record);
-                        }
-                      }}
-                      className="w-8 h-8 rounded-md border border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center transition-colors cursor-pointer"
-                      title="Edit book"
-                    >
-                      <SquarePen className="h-4 w-4 text-gray-600" />
-                    </button>
+                        }}
+                        className="w-8 h-8 rounded-md border border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center transition-colors cursor-pointer"
+                        title="Edit book"
+                      >
+                        <SquarePen className="h-4 w-4 text-gray-600" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

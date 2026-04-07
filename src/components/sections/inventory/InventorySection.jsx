@@ -24,9 +24,10 @@ import usePermissions from "@/components/custom-hooks/usePermissions";
 const InventorySection = ({ response, languages, bookCategories, bookTypes, publishers }) => {
   console.log("response", response);
   const router = useRouter();
-  const { canView, canAnyView, canAnyAdd, canAnyEdit, isLoading: isPermissionsLoading, permissions } = usePermissions();
-  const inventoryPerms = ["Inventory", "Book Details"];
+  const { canView, canAnyView, canAdd, canEdit, isLoading: isPermissionsLoading, permissions } = usePermissions();
   const canViewInventory = canView("Inventory");
+  const canAddInventory = canAdd("Inventory");
+  const canEditInventory = canEdit("Inventory");
   const canViewBookDetails = canView("Book Details");
   const canViewRfidLocation = canView("RFID and Location");
   const canViewActiveTransactions = canView("Active Transactions");
@@ -249,7 +250,7 @@ const defaultColumns = [
         );
       },
     },
-    ...(canAnyEdit(inventoryPerms) ? [{
+    ...(canEditInventory ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -302,7 +303,7 @@ const defaultColumns = [
               tooltipWidth="w-200"
               hideFilter={true}
             /> */}
-            {canAnyAdd(inventoryPerms) && (
+            {canAddInventory && (
               <ButtonWidget
                 onClick={handleAddNew}
                 className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
@@ -341,7 +342,7 @@ const defaultColumns = [
           } : undefined}
         />
       ) : (
-        <InventoryGrid response={mappedResponse} onEditClick={handleEditClick} />
+        <InventoryGrid response={mappedResponse} onEditClick={canEditInventory ? handleEditClick : undefined} />
       )}
     </PageLayout>
   );
