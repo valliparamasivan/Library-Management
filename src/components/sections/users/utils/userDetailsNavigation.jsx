@@ -6,6 +6,7 @@ import { Filter, Send } from 'lucide-react';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
 import { Calendar } from 'lucide-react';
 import UserTransactionFilter from './UserTransactionFilter';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const UserDetailsNavigation = ({ currentPage,
   onTabChange,
@@ -15,10 +16,11 @@ const UserDetailsNavigation = ({ currentPage,
   transactionDateRange,
   transactionDateType,
   onTransactionDateChange, }) => {
+  const { canView } = usePermissions();
   const tabs = [
-    { id: 'user-details', label: 'User Details' },
-    { id: 'transactions', label: 'User Transactions' },
-  ];
+    { id: 'user-details', label: 'User Details', canShow: canView('Users') },
+    { id: 'transactions', label: 'User Transactions', canShow: canView('User Transactions') },
+  ].filter((tab) => tab.canShow);
 
   const isTransactionsTab = currentPage === 'transactions';
 

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import PageLayout from '@/components/layouts/PageLayout'
 import ReportViewNavigation from '../utils/reportViewNavigation'
+import usePermissions from '@/components/custom-hooks/usePermissions'
 import SearchWidget from '@/components/widgets/SearchWidget'
 import BulkExportWidget from '@/components/widgets/BulkExportWidget'
 import useURLParams from '@/components/custom-hooks/useURLParams'
@@ -17,6 +19,33 @@ import { useExportReportToExcel } from '@/store/hooks/ExportHooks'
 
 const UserSection = ({response}) => {
   console.log(response);
+  const router = useRouter();
+  const { canView, isLoading: isPermissionsLoading, permissions } = usePermissions();
+  const canViewReportUsers = canView('Report Users');
+  const canViewReportLoans = canView('Report Loans');
+  const canViewReportInventory = canView('Report Inventory');
+  const canExportReportUsers = canView('Report Users Export');
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length === 0) return;
+    if (canViewReportUsers) return;
+    if (canViewReportLoans) {
+      router.replace('/reports/loan');
+    } else if (canViewReportInventory) {
+      router.replace('/reports/inventory');
+    } else {
+      router.replace('/dashboard');
+    }
+  }, [
+    isPermissionsLoading,
+    permissions.length,
+    canViewReportUsers,
+    canViewReportLoans,
+    canViewReportInventory,
+    router,
+  ]);
+
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -168,6 +197,11 @@ const UserSection = ({response}) => {
         },
     },
   ];
+
+  if (!isPermissionsLoading && permissions.length > 0 && !canViewReportUsers) {
+    return null;
+  }
+
   return (
     <PageLayout breadcrumbs={breadcrumbs}>
       <div>
@@ -196,21 +230,23 @@ const UserSection = ({response}) => {
               }
             />
             <UserStatusFilter />
-            <BulkExportWidget
-              title="Export"
-              exportFn={exportToExcel}
-              selectedItems={selectedRows}
-              getItemId={(item) => item.internalUserId}
-              params={getCurrentParams()}
-              filenameBase="user-report"
-              successMessage="User report exported successfully!"
-              loading={isExporting}
-              requireSelection={false}
-              keyName="ids"
-              moduleType={1}
-              downloadType={3}
-              className="h-9 px-3"
-            />
+            {canExportReportUsers && (
+              <BulkExportWidget
+                title="Export"
+                exportFn={exportToExcel}
+                selectedItems={selectedRows}
+                getItemId={(item) => item.internalUserId}
+                params={getCurrentParams()}
+                filenameBase="user-report"
+                successMessage="User report exported successfully!"
+                loading={isExporting}
+                requireSelection={false}
+                keyName="ids"
+                moduleType={1}
+                downloadType={3}
+                className="h-9 px-3"
+              />
+            )}
           </div>
         </div>
         <TableWidget

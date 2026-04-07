@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SquarePen, Plus, FileText, BookMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import useURLParams from "@/components/custom-hooks/useURLParams";
@@ -24,8 +24,27 @@ import usePermissions from "@/components/custom-hooks/usePermissions";
 const InventorySection = ({ response, languages, bookCategories, bookTypes, publishers }) => {
   console.log("response", response);
   const router = useRouter();
-  const { canAnyAdd, canAnyEdit } = usePermissions();
+  const { canView, canAnyView, canAnyAdd, canAnyEdit, isLoading: isPermissionsLoading, permissions } = usePermissions();
   const inventoryPerms = ["Inventory", "Book Details"];
+  const canViewInventory = canView("Inventory");
+  const canViewBookDetails = canView("Book Details");
+  const canViewRfidLocation = canView("RFID and Location");
+  const canViewActiveTransactions = canView("Active Transactions");
+  const canOpenAnyDetailTab = canAnyView(["Book Details", "RFID and Location", "Active Transactions"]);
+
+  const getDetailTabSegment = () => {
+    if (canViewBookDetails) return "book-details";
+    if (canViewRfidLocation) return "rfid";
+    if (canViewActiveTransactions) return "loan";
+    return null;
+  };
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length > 0 && !canViewInventory) {
+      router.replace("/dashboard");
+    }
+  }, [isPermissionsLoading, permissions.length, canViewInventory, router]);
   const [viewMode, setViewMode] = useState("list");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -249,6 +268,10 @@ const defaultColumns = [
     }] : []),
   ];
 
+  if (!isPermissionsLoading && permissions.length > 0 && !canViewInventory) {
+    return null;
+  }
+
   return (
     <PageLayout breadcrumbs={breadcrumbs}>
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 mb-4 py-2 border-b -mx-4 px-4">
@@ -311,7 +334,11 @@ const defaultColumns = [
           currentPage={currentPage}
           itemsPerPage={itemsPerPage}
           handlePageChange={handlePageChange}
-          onRowClick={(record) => router.push(`/inventory/inventory-details/${record.bookId || record.id}/book-details`)}
+          onRowClick={canOpenAnyDetailTab ? (record) => {
+            const tabSegment = getDetailTabSegment();
+            if (!tabSegment) return;
+            router.push(`/inventory/inventory-details/${record.bookId || record.id}/${tabSegment}`);
+          } : undefined}
         />
       ) : (
         <InventoryGrid response={mappedResponse} onEditClick={handleEditClick} />

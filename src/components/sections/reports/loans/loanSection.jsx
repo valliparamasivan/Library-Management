@@ -14,9 +14,23 @@ import { useState, useEffect } from 'react';
 import { getLoanActionTypeColor } from '@/helpers/FuntionalHelpers';
 import { useExportReportToExcel } from '@/store/hooks/ExportHooks';
 import BulkExportWidget from '@/components/widgets/BulkExportWidget';
+import { useRouter } from 'next/navigation';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 export default function LoanSection({response}) {
   console.log(response);
+  const router = useRouter();
+  const { canView, isLoading: isPermissionsLoading, permissions } = usePermissions();
+  const canViewReportLoans = canView('Report Loans');
+  const canExportReportLoans = canView('Report Loans Export');
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length > 0 && !canViewReportLoans) {
+      router.replace('/dashboard');
+    }
+  }, [isPermissionsLoading, permissions.length, canViewReportLoans, router]);
+
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -281,6 +295,10 @@ export default function LoanSection({response}) {
     );
   };
 
+  if (!isPermissionsLoading && permissions.length > 0 && !canViewReportLoans) {
+    return null;
+  }
+
   return (
     <PageLayout breadcrumbs={breadcrumbs}>
       <div>
@@ -309,21 +327,23 @@ export default function LoanSection({response}) {
               }
             />
             <LoanStatusFilter />
-           <BulkExportWidget
-              title="Export"
-              exportFn={exportToExcel}
-              selectedItems={selectedRows}
-              getItemId={(item) => item.circulationLogId}
-              params={getCurrentParams()}
-              filenameBase="loan-report"
-              successMessage="Loan report exported successfully!"
-              loading={isExporting}
-              requireSelection={false}
-              keyName="ids"
-              moduleType={2}
-              downloadType={3}
-              className="h-9 px-3"
-            />
+            {canExportReportLoans && (
+              <BulkExportWidget
+                title="Export"
+                exportFn={exportToExcel}
+                selectedItems={selectedRows}
+                getItemId={(item) => item.circulationLogId}
+                params={getCurrentParams()}
+                filenameBase="loan-report"
+                successMessage="Loan report exported successfully!"
+                loading={isExporting}
+                requireSelection={false}
+                keyName="ids"
+                moduleType={2}
+                downloadType={3}
+                className="h-9 px-3"
+              />
+            )}
           </div>
         </div>
         <div className="mt-4">

@@ -50,7 +50,8 @@ const LibraryCardBarcode = () => {
 
 const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResponse }) => {
   const router = useRouter();
-  const { canEdit } = usePermissions();
+  const { canEdit, canView } = usePermissions();
+  const canViewTransactions = canView('User Transactions');
   const userData = userResponse?.data || {};
 
   const user = {
@@ -604,7 +605,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
           </div>
         )}
 
-        {activeTab === 'transactions' && (
+        {activeTab === 'transactions' && canViewTransactions && (
           <div className="mt-6 space-y-4">
             <p className="text-sm text-gray-600">
               {mappedTransactionsResponse?.data?.totalElements || 0} Records found

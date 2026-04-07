@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 
 const ReportViewNavigation = ({ currentPage }) => {
   const pathname = usePathname();
+  const { canView } = usePermissions();
   const basePath = `/reports`;
 
   const navigationItems = [
@@ -12,18 +14,21 @@ const ReportViewNavigation = ({ currentPage }) => {
       id: "user",
       label: "User",
       href: `${basePath}/user`,
+      canShow: canView("Report Users"),
     },
     {
       id: "loan",
       label: "Loans",
       href: `${basePath}/loan`,
+      canShow: canView("Report Loans"),
     },
     {
       id: "inventory",
       label: "Inventory",
       href: `${basePath}/inventory`,
+      canShow: canView("Report Inventory"),
     },
-  ];
+  ].filter((item) => item.canShow);
 
   return (
     <div className="mb-1 mt-1">

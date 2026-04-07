@@ -15,9 +15,23 @@ import ButtonWidget from '@/components/widgets/ButtonWidget'
 import { getStatusColor } from '@/helpers/FuntionalHelpers'
 import { useExportReportToExcel } from '@/store/hooks/ExportHooks';
 import BulkExportWidget from '@/components/widgets/BulkExportWidget';
+import { useRouter } from 'next/navigation';
+import usePermissions from '@/components/custom-hooks/usePermissions';
 
 const InventorySection = ({response}) => {
   console.log(response);
+  const router = useRouter();
+  const { canView, isLoading: isPermissionsLoading, permissions } = usePermissions();
+  const canViewReportInventory = canView('Report Inventory');
+  const canExportReportInventory = canView('Report Inventory Export');
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length > 0 && !canViewReportInventory) {
+      router.replace('/dashboard');
+    }
+  }, [isPermissionsLoading, permissions.length, canViewReportInventory, router]);
+
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -206,6 +220,10 @@ const InventorySection = ({response}) => {
     },
   ];
 
+  if (!isPermissionsLoading && permissions.length > 0 && !canViewReportInventory) {
+    return null;
+  }
+
   return (
     <PageLayout breadcrumbs={breadcrumbs}>
       <div>
@@ -234,21 +252,23 @@ const InventorySection = ({response}) => {
               }
             />
             <InventoryFilter />
-            <BulkExportWidget
-              title="Export"
-              exportFn={exportToExcel}
-              selectedItems={selectedRows}
-              getItemId={(item) => item.bookCopyId}
-              params={getCurrentParams()}
-              filenameBase="inventory-report"
-              successMessage="Inventory report exported successfully!"
-              loading={isExporting}
-              requireSelection={false}
-              keyName="ids"
-              moduleType={3}
-              downloadType={3}
-              className="h-9 px-3"
-            />
+            {canExportReportInventory && (
+              <BulkExportWidget
+                title="Export"
+                exportFn={exportToExcel}
+                selectedItems={selectedRows}
+                getItemId={(item) => item.bookCopyId}
+                params={getCurrentParams()}
+                filenameBase="inventory-report"
+                successMessage="Inventory report exported successfully!"
+                loading={isExporting}
+                requireSelection={false}
+                keyName="ids"
+                moduleType={3}
+                downloadType={3}
+                className="h-9 px-3"
+              />
+            )}
           </div>
         </div>
         <TableWidget

@@ -11,7 +11,7 @@ import SelectableExpandableTableWidget from '@/components/widgets/SelectableExpa
 import { getUserStatusColor } from '@/helpers/FuntionalHelpers';
 import { Plus, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 import UserDialog from './utils/userFormDialog';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
@@ -59,7 +59,20 @@ const dateRangeFromFilterType = (typeNum) => {
 
 const UserSection = ({ response: apiResponse, policyDropdown }) => {
   const router = useRouter();
-  const { canAdd } = usePermissions();
+  const { canAdd, canView, isLoading: isPermissionsLoading, permissions } = usePermissions();
+  const canViewUsers = canView("Users");
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length > 0 && !canViewUsers) {
+      router.replace("/dashboard");
+    }
+  }, [isPermissionsLoading, permissions.length, canViewUsers, router]);
+
+  if (!isPermissionsLoading && permissions.length > 0 && !canViewUsers) {
+    return null;
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [editingId, setEditingId] = useState(null);
