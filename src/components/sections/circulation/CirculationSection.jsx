@@ -226,6 +226,27 @@ const CirculationSection = () => {
               transactions: [],
             };
           }
+          // Backend stored values: 'Checked-Out', 'Renewed', 'OVERDUE', 'Checked-In' (case varies).
+          // Render the actual current status — not a derived On-Time bucket — so the
+          // user sees the real lifecycle stage. getLoanActionTypeColor handles styling
+          // for each label.
+          const rawStatus = (tx.status || "").toString().trim();
+          const upper = rawStatus.toUpperCase();
+          let statusBadge;
+          if (upper === "OVERDUE") {
+            statusBadge = "Overdue";
+          } else if (upper === "RENEWED") {
+            statusBadge = "Renewed";
+          } else if (upper === "CHECKED-IN" || upper === "CHECK-IN") {
+            statusBadge = "Checked-In";
+          } else if (upper === "CHECKED-OUT" || upper === "CHECK-OUT") {
+            statusBadge = "Checked-Out";
+          } else {
+            statusBadge = rawStatus || "Checked-Out";
+          }
+          const renewalParts = typeof tx.renewalCount === "string" ? tx.renewalCount.split("/") : [];
+          const renewalCurrent = renewalParts[0] !== undefined && renewalParts[0] !== "" ? Number(renewalParts[0]) : 0;
+          const renewalMax = renewalParts[1] !== undefined && renewalParts[1] !== "" ? Number(renewalParts[1]) : 3;
           transactionsByBook[tx.bookId].transactions.push({
             circulationLogId: tx.circulationLogId,
             bookCopyId: tx.bookCopyId,
@@ -233,10 +254,10 @@ const CirculationSection = () => {
             userName: tx.userName,
             userId: tx.userId,
             dueDate: formatDate(tx.dueDate),
-            renewalCount: tx.renewalCount?.split?.("/")?.[0] ? Number(tx.renewalCount.split("/")[0]) : 0,
-            maxRenewals: tx.renewalCount?.split?.("/")?.[1] ? Number(tx.renewalCount.split("/")[1]) : 3,
+            renewalCount: Number.isFinite(renewalCurrent) ? renewalCurrent : 0,
+            maxRenewals: Number.isFinite(renewalMax) ? renewalMax : 3,
             fine: tx.fineAmount || 0,
-            statusBadge: tx.status === "Overdue" ? "Overdue" : "On-Time",
+            statusBadge,
             overdueDays: 0,
           });
         });
@@ -362,8 +383,22 @@ const CirculationSection = () => {
       if (showTransactions && searchResult?.internalUserId) {
         refreshTransactions();
       }
+      // Refresh book-search results so the In Transaction section reflects
+      // the just-returned copy disappearing from the list.
+      if (searchMode === "book-name" && searchValue?.trim()) {
+        handleSearch(loanFilter);
+      }
     } catch (error) {
-      showErrorToast(error);
+      const errData = error?.data || error?.response?.data;
+      const fieldErrors = errData?.errorMessages;
+      let message = errData?.message || error?.message || "Failed to check in book";
+      if (fieldErrors) {
+        const firstFieldMessage = Object.values(fieldErrors).flat().filter(Boolean)[0];
+        if (firstFieldMessage) {
+          message = firstFieldMessage;
+        }
+      }
+      showErrorToast(message);
     }
   };
 
@@ -393,8 +428,28 @@ const CirculationSection = () => {
       if (showTransactions && searchResult?.internalUserId) {
         refreshTransactions();
       }
+      // Refresh book-search results so the In Transaction section shows the
+      // updated renewal count after the successful renew.
+      if (searchMode === "book-name" && searchValue?.trim()) {
+        handleSearch(loanFilter);
+      }
     } catch (error) {
-      showErrorToast(error);
+      const errData = error?.data || error?.response?.data;
+      const fieldErrors = errData?.errorMessages;
+      let message = errData?.message || error?.message || "Failed to renew book";
+      if (fieldErrors) {
+        const firstFieldMessage = Object.values(fieldErrors).flat().filter(Boolean)[0];
+        if (firstFieldMessage) {
+          message = firstFieldMessage;
+        }
+      }
+      const isRenewLimitError = typeof message === "string" && /renewal limit/i.test(message);
+      if (isRenewLimitError) {
+        setIsRenewDialogOpen(false);
+        setIsRenewLimitModalOpen(true);
+      } else {
+        showErrorToast(message);
+      }
     }
   };
 
@@ -1085,10 +1140,7 @@ const CirculationSection = () => {
                         </div>
 
                         <div className="flex-shrink-0 w-28 flex justify-center pt-0.5">
-                          <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded ${tx.statusBadge === "Overdue"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-green-100 text-green-800"
-                            }`}>
+                          <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded ${getTransactionStatusClass(tx.statusBadge)}`}>
                             {tx.statusBadge}
                           </span>
                         </div>
@@ -1185,10 +1237,7 @@ const CirculationSection = () => {
                           </div>
                           <div>
                             <p className="text-xs text-gray-600 mb-1">Status</p>
-                            <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded ${tx.statusBadge === "Overdue"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-green-100 text-green-800"
-                              }`}>
+                            <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded ${getTransactionStatusClass(tx.statusBadge)}`}>
                               {tx.statusBadge}
                             </span>
                           </div>
