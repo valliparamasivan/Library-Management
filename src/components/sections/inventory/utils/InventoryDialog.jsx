@@ -113,22 +113,24 @@ const InventoryDialog = ({ isOpen, onOpenChange, id, bookData, languages, bookCa
 
   const onSubmit = async (data) => {
     try {
+      const trim = (v) => (typeof v === "string" ? v.trim() : v);
+
       const formData = new FormData();
-      
+
       formData.append("bookCategoryId", data.bookCategory || "");
       formData.append("bookId", isEditMode ? (id) : 0);
       const quantityValue = bookCount && bookCount > 0 ? Number(bookCount) : 1;
       formData.append("quantity", quantityValue);
-      formData.append("author", data.author || "");
-      formData.append("subject", data.subject || "");
-      formData.append("isbn", data.isbn || "");
-      formData.append("title", data.title || "");
-      formData.append("language", data.language || "");
-      formData.append("publisher", data.publisher || "");
-      formData.append("description", data.description || "");
-      formData.append("year", data.year || "");
+      formData.append("author", trim(data.author) || "");
+      formData.append("subject", trim(data.subject) || "");
+      formData.append("isbn", trim(data.isbn) || "");
+      formData.append("title", trim(data.title) || "");
+      formData.append("language", trim(data.language) || "");
+      formData.append("publisher", trim(data.publisher) || "");
+      formData.append("description", trim(data.description) || "");
+      formData.append("year", trim(data.year) || "");
       formData.append("bookTypeId", data.bookType || "");
-      
+
       if (data.image && data.image instanceof File) {
         formData.append("bookImage", data.image);
       }

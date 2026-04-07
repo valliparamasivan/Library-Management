@@ -3,9 +3,11 @@
 import { FileText, Tag, Users, MapPin, History } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 
 const InventoryDetailsNavigation = ({ currentPage, slug }) => {
   const pathname = usePathname();
+  const { canView, canAnyView } = usePermissions();
   const basePath = `/inventory/inventory-details/${slug}`;
 
   const navigationItems = [
@@ -13,23 +15,27 @@ const InventoryDetailsNavigation = ({ currentPage, slug }) => {
       id: "book-details",
       label: "Book Details",
       href: `${basePath}/book-details`,
+      canShow: canView("Book Details"),
     },
     {
       id: "rfid",
       label: "RFID & Location",
       href: `${basePath}/rfid`,
+      canShow: canView("RFID and Location"),
     },
     {
       id: "loan",
       label: "Active Transactions",
       href: `${basePath}/loan`,
+      canShow: canAnyView(["Loans", "Active Transactions"]),
     },
     // {
     //   id: "activity-log",
     //   label: "Activity Log",
     //   href: `${basePath}/activity-log`,
+    //   canShow: canView("Activity Log"),
     // },
-  ];
+  ].filter((item) => item.canShow);
 
   return (
     <div className="mb-1 mt-1">

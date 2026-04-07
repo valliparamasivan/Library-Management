@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import PageLayout from "@/components/layouts/PageLayout";
 import FormInput from "@/components/form/FormInput";
+import FormSelect from "@/components/form/FormSelect";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { Check, Search, ScanLine, X, User, BookOpen, BookMinus, RotateCw, CircleArrowRight, ArrowLeftRight, ArrowRight, ChevronDown, RefreshCw, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -47,7 +48,7 @@ const CirculationSection = () => {
   const circulationPerms = ["Circulation", "Active Transactions"];
 
   const { control, watch, reset } = useForm({
-    defaultValues: { userOrBookRfid: "" },
+    defaultValues: { userOrBookRfid: "", searchType: "user" },
   });
 
   const searchValue = watch("userOrBookRfid");
@@ -590,17 +591,19 @@ const CirculationSection = () => {
 
             <div className="flex items-center gap-2 w-full">
 
-              <select
-                value={searchType}
-                onChange={(e) => {
-                  setSearchType(e.target.value);
+              <FormSelect
+                control={control}
+                name="searchType"
+                options={[
+                  { value: "user", label: "User" },
+                  { value: "book", label: "Book" },
+                ]}
+                onChange={(value) => {
+                  setSearchType(value);
                   clearSearch();
                 }}
-                className="h-9 sm:h-10 border border-gray-200 rounded-lg px-2 text-sm"
-              >
-                <option value="user">User</option>
-                <option value="book">Book</option>
-              </select>
+                className="rounded-lg border border-[#D9D9D9] bg-white w-full sm:w-[120px] text-xs sm:text-sm flex-shrink-0"
+              />
 
               <div className="relative flex-1 min-w-0">
                 <FormInput
