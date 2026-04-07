@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PageLayout from "@/components/layouts/PageLayout";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import ImageWidget from "@/components/widgets/ImageWidget";
 import { ArrowLeft, CircleCheck, Mail, Phone, RefreshCw, ScanLine, X } from "lucide-react";
@@ -50,6 +51,16 @@ const CHECKIN_ITEMS_MOCK = [
 
 const CheckInSection = () => {
   const router = useRouter();
+  const { canView, isLoading: isPermissionsLoading, permissions } = usePermissions();
+  const canCheckIn = canView("Circulation Check-In");
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length > 0 && !canCheckIn) {
+      router.replace("/circulation");
+    }
+  }, [isPermissionsLoading, permissions.length, canCheckIn, router]);
+
   const user = USER_MOCK;
   const [showCheckinItems, setShowCheckinItems] = useState(false);
   const [checkinItems, setCheckinItems] = useState(CHECKIN_ITEMS_MOCK);
@@ -109,6 +120,10 @@ const CheckInSection = () => {
     { label: "Circulation", href: "/circulation" },
     { label: "Check-In" },
   ];
+
+  if (!isPermissionsLoading && permissions.length > 0 && !canCheckIn) {
+    return null;
+  }
 
   return (
     <PageLayout breadcrumbs={breadcrumbs}>

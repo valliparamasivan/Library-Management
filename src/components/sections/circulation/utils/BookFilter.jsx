@@ -15,10 +15,14 @@ const FILTER_OPTIONS = [
   { label: "In Transaction", value: "issued", apiValue: "IN_TRANSACTION" },
 ];
 
-const BookFilter = ({ totalCount = 0, activeFilter = "ALL", onFilterChange }) => {
+const BookFilter = ({ totalCount = 0, activeFilter = "ALL", onFilterChange, showTransactionFilter = true }) => {
   const [open, setOpen] = useState(false);
 
-  const activeOption = FILTER_OPTIONS.find((o) => o.apiValue === activeFilter) || FILTER_OPTIONS[0];
+  const filterOptions = showTransactionFilter
+    ? FILTER_OPTIONS
+    : FILTER_OPTIONS.filter((o) => o.apiValue !== "IN_TRANSACTION");
+
+  const activeOption = filterOptions.find((o) => o.apiValue === activeFilter) || filterOptions[0];
 
   const handleFilterChange = (value) => {
     if (onFilterChange) {
@@ -44,7 +48,7 @@ const BookFilter = ({ totalCount = 0, activeFilter = "ALL", onFilterChange }) =>
       </PopoverTrigger>
       <PopoverContent className="w-48 p-1 border border-gray-200 shadow-lg bg-white rounded-lg" align="end">
         <div className="flex flex-col">
-          {FILTER_OPTIONS.map((option) => (
+          {filterOptions.map((option) => (
             <button
               key={option.value}
               type="button"

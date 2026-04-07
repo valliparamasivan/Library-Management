@@ -11,6 +11,7 @@ import CheckoutConfirmDialog from "./utils/checkoutConfirmDialog";
 import SuccessDialog from "./utils/successDialog";
 import { useSearchBookOrUser, useIssueBook, useScanBook, useScanUser } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
+import usePermissions from "@/components/custom-hooks/usePermissions";
 
 const BARCODE_BARS = [2, 1, 2, 3, 1, 2, 1, 2, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2];
 
@@ -32,6 +33,8 @@ const CheckoutSection = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userIdParam = searchParams.get("userId");
+  const { canView } = usePermissions();
+  const canViewCirculationTransactions = canView("Circulation Transactions");
 
   const { mutateAsync: searchUserApi, isPending: isLoadingUser } = useSearchBookOrUser();
   const { mutateAsync: scanUserApi } = useScanUser();
@@ -251,15 +254,17 @@ const CheckoutSection = () => {
                   </div>
                 </div>
 
-                <ButtonWidget
-                  type="button"
-                  onClick={() => {
-                    router.push(`/circulation/transactions?userId=${user?.libraryCardId}&internalUserId=${user?.internalUserId}`);
-                  }}
-                  className="w-full rounded-lg border-1 border-[#00796B] bg-transparent text-[#00796B] hover:bg-[#00796B]/5 py-2"
-                >
-                  View Transactions
-                </ButtonWidget>
+                {canViewCirculationTransactions && (
+                  <ButtonWidget
+                    type="button"
+                    onClick={() => {
+                      router.push(`/circulation/transactions?userId=${user?.libraryCardId}&internalUserId=${user?.internalUserId}`);
+                    }}
+                    className="w-full rounded-lg border-1 border-[#00796B] bg-transparent text-[#00796B] hover:bg-[#00796B]/5 py-2"
+                  >
+                    View Transactions
+                  </ButtonWidget>
+                )}
               </>
             ) : (
               <div className="text-center py-20 text-gray-400 text-sm">No user selected</div>

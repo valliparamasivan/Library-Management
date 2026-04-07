@@ -41,8 +41,16 @@ const getTransactionStatusClass = (status) => {
 
 const TransactionsSection = () => {
   const router = useRouter();
-  const { canAnyEdit } = usePermissions();
-  const circulationPerms = ["Circulation", "Active Transactions"];
+  const { canEdit, canView, isLoading: isPermissionsLoading, permissions } = usePermissions();
+  const canViewCirculationTransactions = canView("Circulation Transactions");
+  const canEditCirculationTransactions = canEdit("Circulation Transactions");
+
+  useEffect(() => {
+    if (isPermissionsLoading) return;
+    if (permissions.length > 0 && !canViewCirculationTransactions) {
+      router.replace("/circulation");
+    }
+  }, [isPermissionsLoading, permissions.length, canViewCirculationTransactions, router]);
   const searchParams = useSearchParams();
   const userIdParam = searchParams.get("userId");
   const internalUserIdParam = searchParams.get("internalUserId");
@@ -327,7 +335,7 @@ const TransactionsSection = () => {
         </span>
       ),
     },
-    ...(canAnyEdit(circulationPerms) ? [{
+    ...(canEditCirculationTransactions ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -371,6 +379,9 @@ const TransactionsSection = () => {
     }] : []),
   ];
 
+  if (!isPermissionsLoading && permissions.length > 0 && !canViewCirculationTransactions) {
+    return null;
+  }
 
   return (
     <PageLayout breadcrumbs={breadcrumbs}>

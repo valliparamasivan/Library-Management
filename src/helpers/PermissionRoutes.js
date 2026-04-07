@@ -7,7 +7,7 @@
 const ROUTE_TO_PERMISSIONS = {
   "/dashboard": ["dashboard"],
   "/inventory": ["inventory"],
-  "/circulation": ["circulation", "active transactions", "circulation check-in", "circulation check-out", "circulation check-in/out"],
+  "/circulation": ["circulation check-in", "circulation check-out"],
   "/loans": ["loans"],
   "/users": ["users"],
   "/settings": ["settings", "roles", "roles & permissions", "policy", "location", "employees"],

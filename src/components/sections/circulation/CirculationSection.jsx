@@ -44,10 +44,13 @@ const getTransactionStatusClass = (status) => {
 
 const CirculationSection = () => {
   const router = useRouter();
-  const { canAnyEdit } = usePermissions();
-  const circulationPerms = ["Circulation", "Active Transactions"];
+  const { canView, canEdit } = usePermissions();
+  const canCheckIn = canView("Circulation Check-In");
+  const canCheckOut = canView("Circulation Check-Out");
+  const canViewCirculationTransactions = canView("Circulation Transactions");
+  const canEditCirculationTransactions = canEdit("Circulation Transactions");
 
-  const { control, watch, reset } = useForm({
+  const { control, watch, setValue } = useForm({
     defaultValues: { userOrBookRfid: "", searchType: "user" },
   });
 
@@ -276,7 +279,7 @@ const CirculationSection = () => {
   }, [searchResult?.internalUserId]);
 
   const clearSearch = () => {
-    reset({ userOrBookRfid: "" });
+    setValue("userOrBookRfid", "");
     setSearchMode(null);
     setSearchResult(null);
     setShowTransactions(false);
@@ -522,7 +525,7 @@ const CirculationSection = () => {
         </span>
       ),
     },
-    ...(canAnyEdit(circulationPerms) ? [{
+    ...(canEditCirculationTransactions ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
@@ -671,31 +674,35 @@ const CirculationSection = () => {
         {!(searchMode === "user" && searchResult) && !(searchMode === "user-list" && searchResult) && !(searchMode === "book-name" && searchResult) && (
           <div className="flex justify-start">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-full">
-              <ButtonWidget
-                type="button"
-                onClick={openScanForCheckout}
-                className="bg-white rounded-lg p-14 pl-4 border hover:bg-white/80 border-gray-200 cursor-pointer hover:shadow-md transition-shadow flex flex-col items-start gap-4 text-left w-full"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[#00796B] flex items-center justify-center flex-shrink-0">
-                  <ImageWidget src={refresh} alt="Refresh" className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-base font-semibold text-gray-900">
-                  Check-Out
-                </span>
-              </ButtonWidget>
+              {canCheckOut && (
+                <ButtonWidget
+                  type="button"
+                  onClick={openScanForCheckout}
+                  className="bg-white rounded-lg p-14 pl-4 border hover:bg-white/80 border-gray-200 cursor-pointer hover:shadow-md transition-shadow flex flex-col items-start gap-4 text-left w-full"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-[#00796B] flex items-center justify-center flex-shrink-0">
+                    <ImageWidget src={refresh} alt="Refresh" className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-base font-semibold text-gray-900">
+                    Check-Out
+                  </span>
+                </ButtonWidget>
+              )}
 
-              <ButtonWidget
-                type="button"
-                onClick={openScanForCheckin}
-                className="bg-white rounded-lg p-14 pl-4 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow hover:bg-white/80 flex flex-col items-start gap-4 text-left w-full"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[#00953A] flex items-center justify-center flex-shrink-0">
-                  <ImageWidget src={refresh} alt="Refresh" className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-base font-semibold text-gray-900">
-                  Check-In
-                </span>
-              </ButtonWidget>
+              {canCheckIn && (
+                <ButtonWidget
+                  type="button"
+                  onClick={openScanForCheckin}
+                  className="bg-white rounded-lg p-14 pl-4 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow hover:bg-white/80 flex flex-col items-start gap-4 text-left w-full"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-[#00953A] flex items-center justify-center flex-shrink-0">
+                    <ImageWidget src={refresh} alt="Refresh" className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-base font-semibold text-gray-900">
+                    Check-In
+                  </span>
+                </ButtonWidget>
+              )}
             </div>
           </div>
         )}
@@ -778,14 +785,16 @@ const CirculationSection = () => {
                   <User className="w-5 h-5 text-[#00796B]" />
                   <h2 className="text-base font-semibold text-black">User Details</h2>
                 </div>
-                <ButtonWidget
-                  type="button"
-                  onClick={() => router.push(`/circulation/checkout?userId=${searchResult.id}`)}
-                  className="bg-[#00796B] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#00695C] transition-colors"
-                >
-                  <BookMinus className="w-4 h-4" />
-                  <span className="text-sm font-medium">Check Out New Book</span>
-                </ButtonWidget>
+                {canCheckOut && (
+                  <ButtonWidget
+                    type="button"
+                    onClick={() => router.push(`/circulation/checkout?userId=${searchResult.id}`)}
+                    className="bg-[#00796B] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#00695C] transition-colors"
+                  >
+                    <BookMinus className="w-4 h-4" />
+                    <span className="text-sm font-medium">Check Out New Book</span>
+                  </ButtonWidget>
+                )}
               </div>
 
               {/* INNER SMALL CARD WITH USER DETAILS */}
@@ -838,22 +847,24 @@ const CirculationSection = () => {
             </div>
 
             {/* VIEW TRANSACTIONS BUTTON */}
-            <div className="mt-4 flex justify-start">
-              <ButtonWidget
-                type="button"
-                onClick={handleViewTransactions}
-                className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors text-gray-900"
-              >
-                <div className="flex items-center gap-2">
-                  <ArrowLeftRight className="w-4 h-4" />
-                  <span className="text-sm font-medium">View Transactions</span>
-                </div>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showTransactions ? 'rotate-180' : ''}`} />
-              </ButtonWidget>
-            </div>
+            {canViewCirculationTransactions && (
+              <div className="mt-4 flex justify-start">
+                <ButtonWidget
+                  type="button"
+                  onClick={handleViewTransactions}
+                  className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors text-gray-900"
+                >
+                  <div className="flex items-center gap-2">
+                    <ArrowLeftRight className="w-4 h-4" />
+                    <span className="text-sm font-medium">View Transactions</span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showTransactions ? 'rotate-180' : ''}`} />
+                </ButtonWidget>
+              </div>
+            )}
 
             {/* TRANSACTIONS TABLE */}
-            {showTransactions && (
+            {canViewCirculationTransactions && showTransactions && (
               <div className="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                 {isLoadingTransactions ? (
                   <div className="flex items-center justify-center py-12">
@@ -886,8 +897,9 @@ const CirculationSection = () => {
                 </h3>
               </div>
               <BookFilter
-                totalCount={searchResult.availableBooks.length + searchResult.transactionBooks.reduce((sum, b) => sum + b.transactions.length, 0)}
+                totalCount={searchResult.availableBooks.length + (canViewCirculationTransactions ? searchResult.transactionBooks.reduce((sum, b) => sum + b.transactions.length, 0) : 0)}
                 activeFilter={loanFilter}
+                showTransactionFilter={canViewCirculationTransactions}
                 onFilterChange={(value) => {
                   const filterMap = { all: "ALL", available: "AVAILABLE", issued: "IN_TRANSACTION" };
                   const apiFilter = filterMap[value] || "ALL";
@@ -952,25 +964,27 @@ const CirculationSection = () => {
                       </div>
 
                       <div className="flex-shrink-0 w-40 flex justify-center">
-                        <ButtonWidget
-                          type="button"
-                          onClick={() => {
-                            sessionStorage.setItem("checkoutBook", JSON.stringify({
-                              bookId: book.bookId,
-                              bookCopyId: book.bookCopyId,
-                              rfid: book.rfid,
-                              title: book.title,
-                              author: book.author,
-                              isbn: book.isbn,
-                              year: book.year || "",
-                            }));
-                            router.push(`/circulation/checkout-item?bookId=${book.bookId}`);
-                          }}
-                          className="bg-[#00796B] hover:bg-[#00796B]/90 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
-                        >
-                          <ImageWidget src={refresh} alt="Refresh" className="w-5 h-5 text-white" />
-                          Check Out
-                        </ButtonWidget>
+                        {canCheckOut && (
+                          <ButtonWidget
+                            type="button"
+                            onClick={() => {
+                              sessionStorage.setItem("checkoutBook", JSON.stringify({
+                                bookId: book.bookId,
+                                bookCopyId: book.bookCopyId,
+                                rfid: book.rfid,
+                                title: book.title,
+                                author: book.author,
+                                isbn: book.isbn,
+                                year: book.year || "",
+                              }));
+                              router.push(`/circulation/checkout-item?bookId=${book.bookId}`);
+                            }}
+                            className="bg-[#00796B] hover:bg-[#00796B]/90 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+                          >
+                            <ImageWidget src={refresh} alt="Refresh" className="w-5 h-5 text-white" />
+                            Check Out
+                          </ButtonWidget>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -979,7 +993,7 @@ const CirculationSection = () => {
             )}
 
             {/* IN TRANSACTION SECTION */}
-            {searchResult.transactionBooks.length > 0 && (
+            {canViewCirculationTransactions && searchResult.transactionBooks.length > 0 && (
               <div>
                 <div className="bg-[#E8F1F0] rounded-t-lg px-4 py-3 flex items-center">
                   <div className="flex-1 min-w-0">
@@ -1002,9 +1016,11 @@ const CirculationSection = () => {
                   <div className="flex-shrink-0 w-24 flex justify-center">
                     <h4 className="text-sm font-medium text-gray-600">Fine</h4>
                   </div>
-                  <div className="flex-shrink-0 w-28 flex justify-center">
-                    <h4 className="text-sm font-medium text-gray-600">Actions</h4>
-                  </div>
+                  {canEditCirculationTransactions && (
+                    <div className="flex-shrink-0 w-28 flex justify-center">
+                      <h4 className="text-sm font-medium text-gray-600">Actions</h4>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop Rows */}
@@ -1082,31 +1098,33 @@ const CirculationSection = () => {
                           </p>
                         </div>
 
-                        <div className="flex-shrink-0 w-28 flex justify-center pt-0.5">
-                          <div className="flex items-center gap-1">
-                            <ButtonWidget
-                              type="button"
-                              onClick={() => handleReturnClick(tx, book.title)}
-                              className="h-8 w-8 p-0 rounded bg-white hover:bg-gray-50 text-[#00796B] border border-gray-300 flex items-center justify-center"
-                              title="Return"
-                            >
-                              <ImageWidget src={actionIcon} alt="Return" className="w-5 h-5" />
-                            </ButtonWidget>
-                            <ButtonWidget
-                              type="button"
-                              loader={false}
-                              onClick={() => handleRenewClickForCopy(tx, book.title)}
-                              className={`h-8 w-8 p-0 rounded bg-white border border-gray-300 flex items-center justify-center ${
-                                tx.statusBadge === "Overdue"
-                                  ? "opacity-50 text-gray-400 hover:bg-white"
-                                  : "hover:bg-gray-50 text-[#00796B]"
-                              }`}
-                              title={tx.statusBadge === "Overdue" ? "Cannot renew overdue items" : "Renew"}
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                            </ButtonWidget>
+                        {canEditCirculationTransactions && (
+                          <div className="flex-shrink-0 w-28 flex justify-center pt-0.5">
+                            <div className="flex items-center gap-1">
+                              <ButtonWidget
+                                type="button"
+                                onClick={() => handleReturnClick(tx, book.title)}
+                                className="h-8 w-8 p-0 rounded bg-white hover:bg-gray-50 text-[#00796B] border border-gray-300 flex items-center justify-center"
+                                title="Return"
+                              >
+                                <ImageWidget src={actionIcon} alt="Return" className="w-5 h-5" />
+                              </ButtonWidget>
+                              <ButtonWidget
+                                type="button"
+                                loader={false}
+                                onClick={() => handleRenewClickForCopy(tx, book.title)}
+                                className={`h-8 w-8 p-0 rounded bg-white border border-gray-300 flex items-center justify-center ${
+                                  tx.statusBadge === "Overdue"
+                                    ? "opacity-50 text-gray-400 hover:bg-white"
+                                    : "hover:bg-gray-50 text-[#00796B]"
+                                }`}
+                                title={tx.statusBadge === "Overdue" ? "Cannot renew overdue items" : "Renew"}
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </ButtonWidget>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -1181,29 +1199,31 @@ const CirculationSection = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
-                          <button
-                            type="button"
-                            onClick={() => handleReturnClick(tx, book.title)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium text-gray-700 transition-colors"
-                          >
-                            <RotateCw className="w-4 h-4" />
-                            Return
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRenewClickForCopy(tx, book.title)}
-                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                              tx.statusBadge === "Overdue"
-                                ? "bg-gray-100 opacity-50 text-gray-400 cursor-not-allowed"
-                                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                            }`}
-                            disabled={tx.statusBadge === "Overdue"}
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                            Renew
-                          </button>
-                        </div>
+                        {canEditCirculationTransactions && (
+                          <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => handleReturnClick(tx, book.title)}
+                              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium text-gray-700 transition-colors"
+                            >
+                              <RotateCw className="w-4 h-4" />
+                              Return
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRenewClickForCopy(tx, book.title)}
+                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                tx.statusBadge === "Overdue"
+                                  ? "bg-gray-100 opacity-50 text-gray-400 cursor-not-allowed"
+                                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                              }`}
+                              disabled={tx.statusBadge === "Overdue"}
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                              Renew
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}

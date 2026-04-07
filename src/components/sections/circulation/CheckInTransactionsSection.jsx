@@ -53,8 +53,8 @@ const getTransactionStatusClass = (status) => {
 
 const CheckInTransactionsSection = () => {
   const router = useRouter();
-  const { canAnyEdit } = usePermissions();
-  const circulationPerms = ["Circulation", "Active Transactions"];
+  const { canEdit } = usePermissions();
+  const canEditCirculationTransactions = canEdit("Circulation Transactions");
   const user = USER_MOCK;
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [selectedItemForTransfer, setSelectedItemForTransfer] = useState(null);
@@ -206,7 +206,7 @@ const CheckInTransactionsSection = () => {
         </span>
       ),
     },
-    ...(canAnyEdit(circulationPerms) ? [{
+    ...(canEditCirculationTransactions ? [{
       key: "actions",
       label: "Actions",
       sortable: false,
