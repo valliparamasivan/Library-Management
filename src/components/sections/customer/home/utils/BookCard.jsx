@@ -49,12 +49,13 @@ export const BookCard = ({ book}) => {
           by {book.author}{book.year ? ` - ${book.year}` : ''}
         </p>
         
-          <div>
-            <p className="text-xs text-black pb-1">Subject Name</p>
-            <div className="flex items-center gap-2 text-sm text-black">
-              <Globe className="w-4 h-4 text-[#1976D2]" />
-              <span>{book.language || "-"}</span>
-            </div>
+          <p className="text-xs text-black line-clamp-1">
+            {book.subject || "-"}
+          </p>
+
+          <div className="flex items-center gap-2 text-sm text-black">
+            <Globe className="w-4 h-4 text-[#1976D2]" />
+            <span className="line-clamp-1">{book.language || "-"}</span>
           </div>
 
         <div className="bg-[#00A8841A] border border-[#00A88433] rounded-lg p-3 text-center">

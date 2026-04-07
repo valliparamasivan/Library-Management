@@ -33,8 +33,9 @@ const CheckoutSection = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userIdParam = searchParams.get("userId");
-  const { canView } = usePermissions();
+  const { canView, canAdd } = usePermissions();
   const canViewCirculationTransactions = canView("Circulation Transactions");
+  const canAddCheckOut = canAdd("Circulation Check-Out");
 
   const { mutateAsync: searchUserApi, isPending: isLoadingUser } = useSearchBookOrUser();
   const { mutateAsync: scanUserApi } = useScanUser();
@@ -350,22 +351,24 @@ const CheckoutSection = () => {
                   >
                     Cancel
                   </ButtonWidget>
-                  <ButtonWidget
-                    type="button"
-                    loader={false}
-                    onClick={handleCheckoutAll}
-                    disabled={isScanning}
-                    className="bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-lg px-5 py-2"
-                  >
-                    {isScanning ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Loading...
-                      </span>
-                    ) : (
-                      "Check-Out all"
-                    )}
-                  </ButtonWidget>
+                  {canAddCheckOut && (
+                    <ButtonWidget
+                      type="button"
+                      loader={false}
+                      onClick={handleCheckoutAll}
+                      disabled={isScanning}
+                      className="bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-lg px-5 py-2"
+                    >
+                      {isScanning ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading...
+                        </span>
+                      ) : (
+                        "Check-Out all"
+                      )}
+                    </ButtonWidget>
+                  )}
                 </div>
               </>
             )}

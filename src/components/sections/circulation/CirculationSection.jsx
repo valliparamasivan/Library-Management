@@ -44,9 +44,10 @@ const getTransactionStatusClass = (status) => {
 
 const CirculationSection = () => {
   const router = useRouter();
-  const { canView, canEdit } = usePermissions();
+  const { canView, canAdd, canEdit } = usePermissions();
   const canCheckIn = canView("Circulation Check-In");
   const canCheckOut = canView("Circulation Check-Out");
+  const canAddCheckOut = canAdd("Circulation Check-Out");
   const canViewCirculationTransactions = canView("Circulation Transactions");
   const canEditCirculationTransactions = canEdit("Circulation Transactions");
 
@@ -785,7 +786,7 @@ const CirculationSection = () => {
                   <User className="w-5 h-5 text-[#00796B]" />
                   <h2 className="text-base font-semibold text-black">User Details</h2>
                 </div>
-                {canCheckOut && (
+                {canAddCheckOut && (
                   <ButtonWidget
                     type="button"
                     onClick={() => router.push(`/circulation/checkout?userId=${searchResult.id}`)}
@@ -964,7 +965,7 @@ const CirculationSection = () => {
                       </div>
 
                       <div className="flex-shrink-0 w-40 flex justify-center">
-                        {canCheckOut && (
+                        {canAddCheckOut && (
                           <ButtonWidget
                             type="button"
                             onClick={() => {
