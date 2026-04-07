@@ -30,7 +30,7 @@ import RenewSuccessDialog from '@/components/sections/inventory/inventory-detail
 const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
     const router = useRouter();
     const { canAnyEdit } = usePermissions();
-    const loanPerms = ["Inventory", "Loans"];
+    const loanPerms = ["Active Transactions"];
     const { mutateAsync: returnBookApi } = useReturnBook();
     const { mutateAsync: renewBookApi } = useRenewBook();
     const { showErrorToast } = useErrorHandler();

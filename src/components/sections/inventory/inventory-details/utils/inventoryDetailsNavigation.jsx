@@ -7,7 +7,7 @@ import usePermissions from "@/components/custom-hooks/usePermissions";
 
 const InventoryDetailsNavigation = ({ currentPage, slug }) => {
   const pathname = usePathname();
-  const { canView, canAnyView } = usePermissions();
+  const { canView } = usePermissions();
   const basePath = `/inventory/inventory-details/${slug}`;
 
   const navigationItems = [
@@ -27,7 +27,7 @@ const InventoryDetailsNavigation = ({ currentPage, slug }) => {
       id: "loan",
       label: "Active Transactions",
       href: `${basePath}/loan`,
-      canShow: canAnyView(["Loans", "Active Transactions"]),
+      canShow: canView("Active Transactions"),
     },
     // {
     //   id: "activity-log",
