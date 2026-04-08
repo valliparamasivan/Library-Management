@@ -23,6 +23,7 @@ const TransactionStatusFilter = () => {
     { label: "All Status", value: "all-status" },
     { label: "Checked-Out", value: "Checked-Out" },
     { label: "Renewed", value: "Renewed" },
+    { label: "Check-In", value: "Check-In" },
     { label: "Overdue", value: "Overdue" },
   ];
 
@@ -49,7 +50,7 @@ const TransactionStatusFilter = () => {
           className="h-9 px-3 sm:px-4 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 flex items-center gap-2 flex-shrink-0"
         >
           <Filter className="w-4 h-4" />
-          <span className="hidden sm:inline">Filter</span>
+          <span className="hidden sm:inline">{currentLabel}</span>
         </ButtonWidget>
       </PopoverTrigger>
       <PopoverContent className="w-48 p-1 border-0 shadow-lg rounded-lg" align="start">

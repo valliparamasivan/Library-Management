@@ -126,6 +126,8 @@ const TransactionsSection = () => {
     "Checked-Out": 2,
     "Renewed": 3,
     "Overdue": 4,
+    // Backend has no Check-In type on this endpoint — fetch all and filter client-side below.
+    "Check-In": 1,
   };
 
   const mapTransactions = useCallback((items) => {
@@ -141,7 +143,9 @@ const TransactionsSection = () => {
       maxRenewals: tx.renewalCount?.split?.("/")?.[1] ? Number(tx.renewalCount.split("/")[1]) : 3,
       overdueDays: tx.daysLeft != null ? Math.abs(Math.min(tx.daysLeft, 0)) : 0,
       fine: tx.fineAmount > 0 ? `₹ ${tx.fineAmount}` : "₹ 0",
-      status: tx.statusTag || tx.status,
+      status: ["Overdue", "Checked-In"].includes(tx.statusTag)
+        ? tx.statusTag
+        : (tx.status || tx.statusTag || "-"),
       newDueDate: tx.newDueDate || "-",
     }));
   }, []);
@@ -175,7 +179,11 @@ const TransactionsSection = () => {
     fetchUserTransactions(params)
       .then((response) => {
         const items = response?.data || [];
-        setTransactions(mapTransactions(items));
+        let mapped = mapTransactions(items);
+        if (statusFilter === "Check-In") {
+          mapped = mapped.filter((row) => row.status === "Checked-In");
+        }
+        setTransactions(mapped);
       })
       .catch((error) => showErrorToast(error))
       .finally(() => setIsLoadingTransactions(false));

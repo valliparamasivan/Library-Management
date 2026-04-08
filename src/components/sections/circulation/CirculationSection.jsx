@@ -421,7 +421,9 @@ const CirculationSection = () => {
         maxRenewals: tx.renewalCount?.split?.("/")?.[1] ? Number(tx.renewalCount.split("/")[1]) : 3,
         overdueDays: tx.daysLeft != null ? Math.abs(Math.min(tx.daysLeft, 0)) : 0,
         fine: tx.fineAmount > 0 ? `₹ ${tx.fineAmount}` : "₹ 0",
-        status: tx.statusTag || tx.status,
+        status: ["Overdue", "Checked-In"].includes(tx.statusTag)
+          ? tx.statusTag
+          : (tx.status || tx.statusTag || "-"),
       }));
 
       setTransactions(mapped);

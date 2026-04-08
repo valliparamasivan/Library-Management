@@ -114,6 +114,10 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
     });
 
     const bookTitle = apiBookData?.data?.title || "Untitled";
+    const bookImageUrl = apiBookData?.data?.bookImageUrl || null;
+    const displayImageUrl = bookImageUrl
+        ? `https://libraryapi.corpfield.com/books-image/${bookImageUrl}`
+        : bookImage;
 
     const mappedContent = useMemo(() => {
         const content = loansResponse?.data?.content ?? [];
@@ -574,7 +578,7 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
                         />
                         <div className="flex items-center gap-2">
                             <ImageWidget
-                                src={bookImage}
+                                src={displayImageUrl}
                                 alt={bookTitle}
                                 className="w-8 h-8 rounded flex-shrink-0 object-cover"
                             />

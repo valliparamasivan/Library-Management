@@ -356,8 +356,8 @@ const CheckoutSection = () => {
                       type="button"
                       loader={false}
                       onClick={handleCheckoutAll}
-                      disabled={isScanning}
-                      className="bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-lg px-5 py-2"
+                      disabled={isScanning || checkoutItems.length === 0}
+                      className="bg-[#00796B] hover:bg-[#00796B]/90 text-white rounded-lg px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#00796B]"
                     >
                       {isScanning ? (
                         <span className="flex items-center gap-2">
