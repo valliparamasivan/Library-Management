@@ -110,12 +110,10 @@ export const LocationFormSchema = z.object({
     .regex(/^[A-Za-z\s]+$/, "Section Name must contain letters only"),
   shelf: z
     .string()
-    .min(1, "Shelf is required")
-    .regex(/^\d+$/, "Shelf must be a number"),
+    .min(1, "Shelf is required"),
   row: z
     .string()
-    .min(1, "Row is required")
-    .regex(/^\d+$/, "Row must be a number"),
+    .min(1, "Row is required"),
   status: z.union([z.boolean(), z.number()]).optional(),
 });
 

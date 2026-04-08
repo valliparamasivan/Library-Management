@@ -100,6 +100,24 @@ const CheckoutItem = () => {
     }
   };
 
+  // Debounced live user search — mirrors the pattern in CirculationSection.jsx
+  const userSearchDebounceRef = useRef(null);
+  useEffect(() => {
+    if (!showUserSelection) return;
+    const value = userSearchValue?.trim();
+    if (!value) {
+      setUserSearchResults([]);
+      return;
+    }
+    if (userSearchDebounceRef.current) clearTimeout(userSearchDebounceRef.current);
+    userSearchDebounceRef.current = setTimeout(() => {
+      handleUserSearch();
+    }, 500);
+    return () => {
+      if (userSearchDebounceRef.current) clearTimeout(userSearchDebounceRef.current);
+    };
+  }, [userSearchValue, showUserSelection]);
+
   const handleUserSelect = (user) => {
     sessionStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
     router.push(`/circulation/checkout?userId=${user.id}`);

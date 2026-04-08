@@ -265,7 +265,25 @@ const TransactionsSection = () => {
       showSuccessToast(newDate ? `Book renewed successfully. New due date: ${newDate}` : "Book renewed successfully");
       fetchTransactions();
     } catch (error) {
-      showErrorToast(error);
+      // If the backend rejects with "Maximum renewal limit reached", surface the
+      // dedicated modal instead of a generic error toast — same pattern as
+      // CirculationSection.handleRenewConfirm.
+      const errData = error?.data || error?.response?.data;
+      const fieldErrors = errData?.errorMessages;
+      let message = errData?.message || error?.message || "Failed to renew book";
+      if (fieldErrors) {
+        const firstFieldMessage = Object.values(fieldErrors).flat().filter(Boolean)[0];
+        if (firstFieldMessage) {
+          message = firstFieldMessage;
+        }
+      }
+      const isRenewLimitError = typeof message === "string" && /renewal limit/i.test(message);
+      if (isRenewLimitError) {
+        setIsRenewDialogOpen(false);
+        setIsRenewLimitModalOpen(true);
+      } else {
+        showErrorToast(message);
+      }
     }
   };
 
