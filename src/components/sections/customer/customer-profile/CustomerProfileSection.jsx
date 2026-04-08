@@ -520,18 +520,34 @@ const CustomerProfileSection = ({ profileDetails }) => {
 
               {/* Current Progress */}
               <div className="mb-8 p-6 bg-gradient-to-br from-[#0B63CE]/5 to-accent/5 rounded-xl border border-[#0B63CE]/20">
-                <div className="mb-4">
-                  <div className="text-sm text-muted-foreground mb-2">Total reading in April: {booksReadThisMonth} / {readingGoal} books</div>
-                  <div className="w-full bg-white rounded-full h-4 overflow-hidden shadow-inner mb-3">
-                    <div
-                      className="bg-gradient-to-r from-[#0B63CE] to-accent h-full transition-all duration-500 rounded-full"
-                      style={{ width: `${Math.min((booksReadThisMonth / readingGoal) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  You're {Math.round(((readingGoal - booksReadThisMonth) / readingGoal) * 100)}% away from your goal. Keep reading!
-                </p>
+                {(() => {
+                  // When the user hasn't set a reading goal yet (readingGoal = 0),
+                  // the percentage math divides by zero and produces NaN. Treat
+                  // an unset goal as 0% progress / 0% remaining instead.
+                  const hasGoal = readingGoal > 0;
+                  const progressPercent = hasGoal
+                    ? Math.min(Math.round((booksReadThisMonth / readingGoal) * 100), 100)
+                    : 0;
+                  const awayPercent = hasGoal
+                    ? Math.max(100 - progressPercent, 0)
+                    : 0;
+                  return (
+                    <>
+                      <div className="mb-4">
+                        <div className="text-sm text-muted-foreground mb-2">Total reading in April: {booksReadThisMonth} / {readingGoal} books</div>
+                        <div className="w-full bg-white rounded-full h-4 overflow-hidden shadow-inner mb-3">
+                          <div
+                            className="bg-gradient-to-r from-[#0B63CE] to-accent h-full transition-all duration-500 rounded-full"
+                            style={{ width: `${progressPercent}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        You're {awayPercent}% away from your goal. Keep reading!
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Adjust Reading Goal */}

@@ -7,12 +7,13 @@ import SearchWidget from '@/components/widgets/SearchWidget';
 import TableWidget from '@/components/widgets/TableWidget';
 import ButtonWidget from '@/components/widgets/ButtonWidget';
 import { getStatusColor } from '@/helpers/FuntionalHelpers';
-import { SquarePen, Plus } from 'lucide-react';
+import { SquarePen, Plus, Mail, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SettingsViewNavigation from '../utils/settingsViewNavigation';
 import EmployeeFormDialog from './utils/employeeFormDialog';
 import { useChangeEmployeeStatus } from '@/store/hooks/SettingsHooks';
+import { useSendPasswordResetMail } from '@/store/hooks/UserHooks';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import { Switch } from '@/components/ui/switch';
 import usePermissions from '@/components/custom-hooks/usePermissions';
@@ -27,7 +28,9 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [resettingId, setResettingId] = useState(null);
     const { mutateAsync: changeStatus } = useChangeEmployeeStatus();
+    const { mutateAsync: sendResetMail } = useSendPasswordResetMail();
     const { showErrorToast, showSuccessToast } = useErrorHandler();
 
     const handleStatusToggle = async (id) => {
@@ -37,6 +40,27 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
             router.refresh();
         } catch (error) {
             showErrorToast(error);
+        }
+    };
+
+    const handleSendResetLink = async (record) => {
+        if (!record?.email) {
+            showErrorToast("Employee email is missing");
+            return;
+        }
+        try {
+            setResettingId(record.id);
+            // Same backend endpoint as the Users page (POST /public/reset-password-mail).
+            // userType is "EMP" for employees and "CUST" for library users — the backend
+            // branches on this in InternalUserFacade.processForgotPassword.
+            const response = await sendResetMail({ email: record.email, userType: "EMP" });
+            showSuccessToast(response?.message || "Password reset link sent successfully");
+        } catch (error) {
+            showErrorToast(
+                error?.data?.message || error?.message || "Failed to send password reset link"
+            );
+        } finally {
+            setResettingId(null);
         }
     };
 
@@ -204,18 +228,34 @@ const EmployeeSection = ({ response: apiResponse, rolesResponse }) => {
             key: "actions",
             label: "Actions",
             sortable: false,
-            minWidth: "120px",
-            render: (record) => (
-                <div className="flex gap-1">
-                    <button
-                        onClick={() => handleEditClick(record.id)}
-                        className="p-1.5 hover:bg-gray-100 rounded border border-gray-300 cursor-pointer"
-                        title="Edit"
-                    >
-                        <SquarePen className="w-4 h-4 text-gray-400" />
-                    </button>
-                </div>
-            ),
+            minWidth: "160px",
+            render: (record) => {
+                const isSending = resettingId === record.id;
+                return (
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => handleEditClick(record.id)}
+                            className="p-1.5 hover:bg-gray-100 rounded border border-gray-300 cursor-pointer"
+                            title="Edit"
+                        >
+                            <SquarePen className="w-4 h-4 text-gray-400" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleSendResetLink(record)}
+                            disabled={isSending}
+                            className="p-1.5 hover:bg-gray-100 rounded border border-gray-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Send Password Reset Link"
+                        >
+                            {isSending ? (
+                                <Loader2 className="w-4 h-4 text-[#00796B] animate-spin" />
+                            ) : (
+                                <Mail className="w-4 h-4 text-[#00796B]" />
+                            )}
+                        </button>
+                    </div>
+                );
+            },
         }] : []),
     ];
 

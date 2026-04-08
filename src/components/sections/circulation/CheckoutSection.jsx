@@ -214,17 +214,17 @@ const CheckoutSection = () => {
               </div>
             ) : user ? (
               <>
-                <div className="bg-gradient-to-br from-[#0B63CE] to-[#00A884] rounded-xl p-5 text-white shadow-md min-h-[260px] flex flex-col mb-4">
+                <div className="bg-gradient-to-br from-[#0B63CE] to-[#00A884] rounded-xl p-5 text-white shadow-md min-h-[260px] flex flex-col mb-4 min-w-0">
                   <p className="text-xs font-medium tracking-widest opacity-90 mb-1">LIBRARY CARD</p>
-                  <h3 className="text-xl font-bold text-white mb-3">{user.userName}</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-white mb-3 truncate" title={user.userName}>{user.userName}</h3>
+                  <div className="space-y-2 text-sm min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Mail className="w-4 h-4 flex-shrink-0 opacity-90" />
-                      <span>{user.email}</span>
+                      <span className="truncate min-w-0" title={user.email}>{user.email}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Phone className="w-4 h-4 flex-shrink-0 opacity-90" />
-                      <span>{user.phone}</span>
+                      <span className="truncate min-w-0" title={user.phone}>{user.phone}</span>
                     </div>
                   </div>
                   <div className="mt-auto pt-4">
