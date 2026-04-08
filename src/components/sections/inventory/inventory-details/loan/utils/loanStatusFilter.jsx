@@ -23,7 +23,8 @@ const LoanStatusFilter = () => {
         { label: "All Status", value: 1 },
         { label: "Checked-Out", value: 2 },
         { label: "Renewed", value: 3 },
-        { label: "Overdue", value: 4 }
+        { label: "Overdue", value: 4 },
+        { label: "Check-In", value: 5 }
     ];
 
     const handleFilterChange = (value) => {

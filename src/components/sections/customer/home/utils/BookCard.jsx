@@ -5,15 +5,16 @@ import { Globe } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "nextjs-toploader/app";
 import TooltipWidget from "@/components/widgets/TooltipWidget";
+import bookImage from "@/assets/image/book.png";
 
 export const BookCard = ({ book}) => {
   const router = useRouter();
   const available = book.available || 3;
   const total = book.total || 5;
-  
+
   const getImageUrl = () => {
     if (!book.image) {
-      return "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop";
+      return bookImage;
     }
     const s3Url = process.env.S3_URL || process.env.NEXT_PUBLIC_S3_URL || '';
     return s3Url ? `${s3Url}/books-image/${book.image}` : book.image;
