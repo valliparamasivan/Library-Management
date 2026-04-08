@@ -15,6 +15,7 @@ import BookFilter from "./utils/BookFilter";
 import TableWidget from "@/components/widgets/TableWidget";
 import useURLParams from "@/components/custom-hooks/useURLParams";
 import usePermissions from "@/components/custom-hooks/usePermissions";
+import useScannerStatus from "@/components/custom-hooks/useScannerStatus";
 import { useSearchBookOrUser, useGetUserTransactions, useReturnBook, useRenewBook, useScanUser } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 import userImage from '@/assets/image/user.png';
@@ -25,6 +26,53 @@ import RenewBookDueDateDialog from "./utils/renewBookDueDateDialog";
 import RenewSuccessDialog from "./utils/renewSuccessDialog";
 import RenewLimitReachedModal from "./utils/RenewLimitReachedModal";
 import ReturnDialog from "./utils/returnDialog";
+
+const ScannerStatusPill = ({ label, connected, supported }) => {
+  // Three states:
+  //   supported === false → browser can't probe (Firefox/Safari)
+  //   connected === true  → device present
+  //   otherwise           → disconnected / not detected
+  const isUnsupported = supported === false;
+  const showConnected = connected === true;
+  const dotClass = isUnsupported
+    ? "bg-gray-400"
+    : showConnected
+      ? "bg-green-500"
+      : "bg-red-500";
+  const ariaState = isUnsupported
+    ? "status unavailable"
+    : showConnected
+      ? "connected"
+      : "disconnected";
+
+  return (
+    <div
+      role="status"
+      aria-label={`${label} ${ariaState}`}
+      title={
+        isUnsupported
+          ? `${label}: status unavailable in this browser`
+          : showConnected
+            ? `${label}: connected`
+            : `${label}: disconnected`
+      }
+      className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white rounded-lg border border-gray-200 text-gray-900 flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-initial cursor-default"
+    >
+      <span
+        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${dotClass}`}
+      >
+        {showConnected ? (
+          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+        ) : (
+          <X className="w-3 h-3 text-white" strokeWidth={3} />
+        )}
+      </span>
+      <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+        {label}
+      </span>
+    </div>
+  );
+};
 
 const getTransactionStatusClass = (status) => {
   switch (status) {
@@ -72,6 +120,9 @@ const CirculationSection = () => {
   const [isScanUserCardOpen, setIsScanUserCardOpen] = useState(false);
   const [scanTargetRoute, setScanTargetRoute] = useState("/circulation/checkout");
   const [scanUserInput, setScanUserInput] = useState("");
+  const scanUserInputRef = useRef(null);
+  const readerTimeoutRef = useRef(null);
+  const READER_DETECT_TIMEOUT_MS = 5000;
   const [showTransactions, setShowTransactions] = useState(false);
   const [transactions, setTransactions] = useState([]);
 
@@ -84,6 +135,13 @@ const CirculationSection = () => {
   const [isRenewLimitModalOpen, setIsRenewLimitModalOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [selectedItemForReturn, setSelectedItemForReturn] = useState(null);
+
+  // Scanner connection status (live, via WebHID)
+  const {
+    supported: isScannerApiSupported,
+    isRfidScannerConnected,
+    isBookScannerConnected,
+  } = useScannerStatus();
 
   const breadcrumbs = [{ label: "Circulation", href: "/circulation" }];
 
@@ -116,19 +174,40 @@ const CirculationSection = () => {
     setIsScanUserCardOpen(true);
   };
 
+  const clearReaderTimeout = () => {
+    if (readerTimeoutRef.current) {
+      clearTimeout(readerTimeoutRef.current);
+      readerTimeoutRef.current = null;
+    }
+  };
+
   const closeScanUserCard = () => {
+    clearReaderTimeout();
     setIsScanUserCardOpen(false);
     setScanUserInput("");
+  };
+
+  const armRfidReader = () => {
+    clearReaderTimeout();
+    setScanUserInput("");
+    scanUserInputRef.current?.focus();
+    readerTimeoutRef.current = setTimeout(() => {
+      readerTimeoutRef.current = null;
+      showErrorToast("Error: RFID reader not detected. Please connect the device and try again.");
+    }, READER_DETECT_TIMEOUT_MS);
   };
 
   const handleScanUser = async () => {
     const value = scanUserInput.trim();
     if (!value) return;
 
+    clearReaderTimeout();
+
     try {
       const response = await scanUserApi({ userId: value });
       const userData = response?.data;
       if (userData) {
+        showSuccessToast(`Success: RFID scanned successfully (RFID: ${userData.userId || value})`);
         router.push(`${scanTargetRoute}?userId=${userData.userId || value}`);
       }
     } catch (error) {
@@ -696,31 +775,18 @@ const CirculationSection = () => {
 
 
 
-          {/* SCANNER BUTTONS (EXACT OLD STYLE) */}
+          {/* SCANNER STATUS LABELS */}
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap justify-center lg:justify-start w-full lg:w-auto">
-            <ButtonWidget
-              type="button"
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-900 flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-initial"
-            >
-              <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                <Check className="w-1 h-1 text-white" strokeWidth={2} />
-              </span>
-              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                RFID Scanner
-              </span>
-            </ButtonWidget>
-
-            <ButtonWidget
-              type="button"
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-900 flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-initial"
-            >
-              <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                <Check className="w-1 h-1 text-white" strokeWidth={2} />
-              </span>
-              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                Book Scanner
-              </span>
-            </ButtonWidget>
+            <ScannerStatusPill
+              label="RFID Scanner"
+              connected={isRfidScannerConnected}
+              supported={isScannerApiSupported}
+            />
+            <ScannerStatusPill
+              label="Book Scanner"
+              connected={isBookScannerConnected}
+              supported={isScannerApiSupported}
+            />
           </div>
         </div>
 
@@ -1308,23 +1374,34 @@ const CirculationSection = () => {
         {isScanUserCardOpen && (
           <div className="mt-6 flex justify-center">
             <div className="w-full max-w-2xl bg-[#F9F9F9] border border-gray-200 rounded-xl p-6 flex flex-col items-center">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                Scan User Card
-              </h2>
-              <div className="w-12 h-12 bg-[#B3DDB580] rounded-md flex items-center justify-center mb-6">
-                {isScanningUser ? (
-                  <Loader2 className="w-10 h-10 text-[#00796B] animate-spin" strokeWidth={1.5} />
-                ) : (
-                  <ScanLine className="w-10 h-10 text-[#00796B]" strokeWidth={1.5} />
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={armRfidReader}
+                disabled={isScanningUser}
+                className="flex flex-col items-center focus:outline-none disabled:cursor-not-allowed cursor-pointer group"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 mb-6 group-hover:text-[#00796B] transition-colors">
+                  Scan User Card
+                </h2>
+                <div className="w-12 h-12 bg-[#B3DDB580] rounded-md flex items-center justify-center mb-6 group-hover:bg-[#B3DDB5] transition-colors">
+                  {isScanningUser ? (
+                    <Loader2 className="w-10 h-10 text-[#00796B] animate-spin" strokeWidth={1.5} />
+                  ) : (
+                    <ScanLine className="w-10 h-10 text-[#00796B]" strokeWidth={1.5} />
+                  )}
+                </div>
+              </button>
               {isScanningUser && (
                 <p className="text-sm text-gray-500 mb-4">Verifying...</p>
               )}
               <input
+                ref={scanUserInputRef}
                 type="text"
                 value={scanUserInput}
-                onChange={(e) => setScanUserInput(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value) clearReaderTimeout();
+                  setScanUserInput(e.target.value);
+                }}
                 onKeyDown={(e) => { if (e.key === "Enter") handleScanUser(); }}
                 autoFocus
                 className="sr-only"

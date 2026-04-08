@@ -11,13 +11,18 @@ import ImageWidget from "@/components/widgets/ImageWidget";
 import { useSearchBookOrUser } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 
+const READER_DETECT_TIMEOUT_MS = 5000;
+
 const BookAddPage = () => {
   const router = useRouter();
   const [isScanning, setIsScanning] = useState(false);
   const [searchResults, setSearchResults] = useState(null);
+  const [scanBookInput, setScanBookInput] = useState("");
+  const scanBookInputRef = useRef(null);
+  const bookReaderTimeoutRef = useRef(null);
 
   const { mutateAsync: searchBookApi, isPending: isSearching } = useSearchBookOrUser();
-  const { showErrorToast } = useErrorHandler();
+  const { showErrorToast, showSuccessToast } = useErrorHandler();
 
   const { control, watch, reset } = useForm({
     defaultValues: { searchBook: "" },
@@ -79,11 +84,38 @@ const BookAddPage = () => {
     };
   }, [searchValue]);
 
+  const clearBookReaderTimeout = () => {
+    if (bookReaderTimeoutRef.current) {
+      clearTimeout(bookReaderTimeoutRef.current);
+      bookReaderTimeoutRef.current = null;
+    }
+  };
+
   const handleScanClick = () => {
     setIsScanning(true);
+    clearBookReaderTimeout();
+    setScanBookInput("");
+    // wait for the hidden input to mount before focusing
+    setTimeout(() => scanBookInputRef.current?.focus(), 0);
+    bookReaderTimeoutRef.current = setTimeout(() => {
+      bookReaderTimeoutRef.current = null;
+      showErrorToast("Error: RFID reader not detected. Please connect the device and try again.");
+    }, READER_DETECT_TIMEOUT_MS);
   };
 
   const handleCancelScan = () => {
+    clearBookReaderTimeout();
+    setScanBookInput("");
+    setIsScanning(false);
+  };
+
+  const handleScanBook = () => {
+    const value = scanBookInput.trim();
+    if (!value) return;
+    clearBookReaderTimeout();
+    showSuccessToast(`Success: RFID scanned successfully (RFID: ${value})`);
+    reset({ searchBook: value });
+    setScanBookInput("");
     setIsScanning(false);
   };
 
@@ -177,13 +209,27 @@ const BookAddPage = () => {
                 <button
                   type="button"
                   onClick={handleScanClick}
-                  className="flex flex-col items-center cursor-pointer border-0 bg-transparent p-0"
+                  className="flex flex-col items-center cursor-pointer border-0 bg-transparent p-0 group"
                 >
-                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Scan Book</h3>
-                  <div className="w-12 h-12 bg-[#B3DDB580] rounded-md flex items-center justify-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6 group-hover:text-[#00796B] transition-colors">Scan Book</h3>
+                  <div className="w-12 h-12 bg-[#B3DDB580] rounded-md flex items-center justify-center mb-6 group-hover:bg-[#B3DDB5] transition-colors">
                     <ScanLine className="w-10 h-10 text-[#00796B]" strokeWidth={1.5} />
                   </div>
                 </button>
+                {isScanning && (
+                  <input
+                    ref={scanBookInputRef}
+                    type="text"
+                    value={scanBookInput}
+                    onChange={(e) => {
+                      if (e.target.value) clearBookReaderTimeout();
+                      setScanBookInput(e.target.value);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleScanBook(); }}
+                    autoFocus
+                    className="sr-only"
+                  />
+                )}
                 <ButtonWidget
                   type="button"
                   onClick={handleCancelScan}

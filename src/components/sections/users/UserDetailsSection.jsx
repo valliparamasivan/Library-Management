@@ -26,7 +26,9 @@ const BARCODE_BARS = [2, 1, 2, 3, 1, 2, 1, 2, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2];
 
 const getTransactionStatusClass = (status) => {
   switch (status) {
-    case 'Check-In': return 'bg-[#4CAF5033] text-[#4CAF50]';
+    case 'Check-In':
+    case 'Checked-In':
+    case 'Returned': return 'bg-[#4CAF5033] text-[#4CAF50]';
     case 'Renewed': return 'bg-[#900AEF33] text-[#900AEF]';
     case 'Checked-Out': return 'bg-[#E77B3333] text-[#E77B33]';
     case 'Overdue': return 'bg-[#F4433633] text-[#F44336]';

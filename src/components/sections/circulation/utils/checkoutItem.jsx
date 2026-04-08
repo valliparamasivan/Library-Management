@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+const READER_DETECT_TIMEOUT_MS = 5000;
 import PageLayout from "@/components/layouts/PageLayout";
 import ButtonWidget from "@/components/widgets/ButtonWidget";
 import ImageWidget from "@/components/widgets/ImageWidget";
@@ -19,7 +21,10 @@ const CheckoutItem = () => {
 
   const { mutateAsync: searchUser, isPending: isSearchingUser } = useSearchBookOrUser();
   const { mutateAsync: scanUserApi, isPending: isScanningUser } = useScanUser();
-  const { showErrorToast } = useErrorHandler();
+  const { showErrorToast, showSuccessToast } = useErrorHandler();
+
+  const scanUserInputRef = useRef(null);
+  const readerTimeoutRef = useRef(null);
 
   const { control, watch, reset } = useForm({
     defaultValues: { userSearch: "" },
@@ -100,14 +105,34 @@ const CheckoutItem = () => {
     router.push(`/circulation/checkout?userId=${user.id}`);
   };
 
+  const clearReaderTimeout = () => {
+    if (readerTimeoutRef.current) {
+      clearTimeout(readerTimeoutRef.current);
+      readerTimeoutRef.current = null;
+    }
+  };
+
+  const armRfidReader = () => {
+    clearReaderTimeout();
+    setScanUserInput("");
+    scanUserInputRef.current?.focus();
+    readerTimeoutRef.current = setTimeout(() => {
+      readerTimeoutRef.current = null;
+      showErrorToast("Error: RFID reader not detected. Please connect the device and try again.");
+    }, READER_DETECT_TIMEOUT_MS);
+  };
+
   const handleScanUserCard = async () => {
     const value = scanUserInput.trim();
     if (!value) return;
+
+    clearReaderTimeout();
 
     try {
       const response = await scanUserApi({ userId: value });
       const userData = response?.data;
       if (userData) {
+        showSuccessToast(`Success: RFID scanned successfully (RFID: ${userData.userId || value})`);
         sessionStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
         router.push(`/circulation/checkout?userId=${userData.userId || value}`);
       }
@@ -117,6 +142,7 @@ const CheckoutItem = () => {
   };
 
   const handleCancelUserSelection = () => {
+    clearReaderTimeout();
     setShowUserSelection(false);
     setUserSearchResults([]);
     setScanUserInput("");
@@ -299,21 +325,32 @@ const CheckoutItem = () => {
               {/* Scan User Card Section */}
               <div className="mb-6 flex justify-center">
                 <div className="w-full max-w-2xl bg-[#F9F9F9] border border-gray-200 rounded-xl p-6 flex flex-col items-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Scan User Card</h3>
-                  <div className="w-12 h-12 bg-[#B3DDB580] rounded-md flex items-center justify-center mb-6">
-                    {isScanningUser ? (
-                      <Loader2 className="w-10 h-10 text-[#00796B] animate-spin" strokeWidth={1.5} />
-                    ) : (
-                      <ScanLine className="w-10 h-10 text-[#00796B]" strokeWidth={1.5} />
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={armRfidReader}
+                    disabled={isScanningUser}
+                    className="flex flex-col items-center focus:outline-none disabled:cursor-not-allowed cursor-pointer group border-0 bg-transparent p-0"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 group-hover:text-[#00796B] transition-colors">Scan User Card</h3>
+                    <div className="w-12 h-12 bg-[#B3DDB580] rounded-md flex items-center justify-center mb-6 group-hover:bg-[#B3DDB5] transition-colors">
+                      {isScanningUser ? (
+                        <Loader2 className="w-10 h-10 text-[#00796B] animate-spin" strokeWidth={1.5} />
+                      ) : (
+                        <ScanLine className="w-10 h-10 text-[#00796B]" strokeWidth={1.5} />
+                      )}
+                    </div>
+                  </button>
                   {isScanningUser && (
                     <p className="text-sm text-gray-500 mb-4">Verifying...</p>
                   )}
                   <input
+                    ref={scanUserInputRef}
                     type="text"
                     value={scanUserInput}
-                    onChange={(e) => setScanUserInput(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value) clearReaderTimeout();
+                      setScanUserInput(e.target.value);
+                    }}
                     onKeyDown={(e) => { if (e.key === "Enter") handleScanUserCard(); }}
                     autoFocus
                     className="sr-only"
