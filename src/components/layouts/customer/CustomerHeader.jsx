@@ -1,6 +1,7 @@
 "use client";
 
 import { LoginModal } from '@/components/sections/customer/utils/LoginModal';
+import { RegisterModal } from '@/components/sections/customer/utils/RegisterModal';
 import { NotificationDropdown } from '@/components/sections/customer/notification/utils/NotificationDropdown';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,6 +16,7 @@ const CustomerHeader = ({ variant = 'logged-out' }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -35,7 +37,13 @@ const CustomerHeader = ({ variant = 'logged-out' }) => {
     if (image.startsWith('data:') || image.startsWith('http')) return image;
     const cleanImage = image.replace(/^\/?uploads\/profile\//, '').replace(/^\//, '');
     const s3Url = process.env.S3_URL || process.env.NEXT_PUBLIC_S3_URL || '';
-    return s3Url ? `${s3Url}/profile-image/${cleanImage}` : image;
+    if (s3Url) return `${s3Url}/profile-image/${cleanImage}`;
+    // Local/dev: the API serves uploaded profile images via the
+    // /profile-image/** resource handler in WebSecurityConfig. Use the API
+    // base URL so the <img> doesn't try to load from the Next.js origin.
+    const apiBase = process.env.BASE_URL || process.env.NEXT_PUBLIC_API_URL || '';
+    if (apiBase) return `${apiBase.replace(/\/$/, '')}/profile-image/${cleanImage}`;
+    return image;
   };
 
   const finalImage = getImageUrl(profileImgUrl);
@@ -148,13 +156,22 @@ const CustomerHeader = ({ variant = 'logged-out' }) => {
             {!isAuthenticated ? (
               <>
                 {!isChangePasswordPage && (
-                  <Button
-                    variant="default"
-                    onClick={() => setIsLoginModalOpen(true)}
-                    className="bg-[#0B63CE] hover:bg-[#1565C0] text-white font-normal rounded-lg px-4 py-2 text-sm sm:text-sm min-w-[80px] sm:min-w-[120px]"
-                  >
-                    Login
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsRegisterModalOpen(true)}
+                      className="border-[#0B63CE] text-[#0B63CE] hover:bg-[#0B63CE]/5 font-normal rounded-lg px-4 py-2 text-sm sm:text-sm min-w-[80px] sm:min-w-[120px]"
+                    >
+                      Sign Up
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={() => setIsLoginModalOpen(true)}
+                      className="bg-[#0B63CE] hover:bg-[#1565C0] text-white font-normal rounded-lg px-4 py-2 text-sm sm:text-sm min-w-[80px] sm:min-w-[120px]"
+                    >
+                      Login
+                    </Button>
+                  </>
                 )}
               </>
             ) : (
@@ -278,6 +295,11 @@ const CustomerHeader = ({ variant = 'logged-out' }) => {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
+      />
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSwitchToLogin={() => setIsLoginModalOpen(true)}
       />
     </header>
   );

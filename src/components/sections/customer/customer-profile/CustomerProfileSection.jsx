@@ -19,7 +19,6 @@ const CustomerProfileSection = ({ profileDetails }) => {
   const [showPolicyDetails, setShowPolicyDetails] = useState(true);
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
-  const [profileInitials, setProfileInitials] = useState('PS');
 
   const { mutate: updateProfile, isPending: isUpdatingProfile } = useCustomerProfileUpdate();
   const { mutate: setGoal, isPending: isSettingGoal } = useCustomerSetGoal();
@@ -132,6 +131,20 @@ const CustomerProfileSection = ({ profileDetails }) => {
     }
   }, [profileData, setValue]);
 
+  // Initials shown when there's no profile image. Derived from the live form
+  // value so it updates as soon as the user edits their name. Uses the first
+  // letter of the first two words (e.g. "Mark Smith" → "MS"); falls back to
+  // the first two characters of a single word, then "?" if there's no name.
+  const watchedName = (watch('name') || profileData?.profile?.userName || '').trim();
+  const profileInitials = (() => {
+    if (!watchedName) return '?';
+    const parts = watchedName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  })();
+
   // Reading Goals
   const readingGoal = watch('readingGoal') || 0;
   const booksReadThisMonth = profileData?.readingProgress?.completedBooks || 0;
@@ -151,6 +164,7 @@ const CustomerProfileSection = ({ profileDetails }) => {
   }));
 
   const pSettings = profileData?.policySettings || {};
+  const policyName = pSettings.policyName || '—';
   const maxBooks = pSettings.maxBooksAllowed ?? 0;
   const loanPeriod = pSettings.loanPeriodDays ?? 0;
   const renewalLimit = pSettings.maxRenewalPerBook ?? 0;
@@ -170,8 +184,7 @@ const CustomerProfileSection = ({ profileDetails }) => {
 
   // Policy details data
   const policyDetails = [
-    { id: 'memberType', heading: 'Member Type:', description: 'Member' },
-    { id: 'policy', heading: 'Policy:', description: 'This policy is designed to provide borrowing privileges to all library members.' },
+    { id: 'policy', heading: 'Policy:', description: `You are on the "${policyName}" policy.` },
     { id: 'borrowing', heading: 'Borrowing:', description: `You can borrow up to ${maxBooks} items simultaneously for a period of ${loanPeriod} days. If a book is overdue, a fine of ₹${finePerDay} per day will be charged.` },
     { id: 'renewals', heading: 'Renewals:', description: `You can renew up to ${renewalLimit} times if no other user has reserved the item.` },
     { id: 'reservations', heading: 'Reservations:', description: `You can reserve up to ${reservationLimit || 'N/A'} items at a time. You will be notified when the reserved item becomes available.` },
@@ -196,7 +209,12 @@ const CustomerProfileSection = ({ profileDetails }) => {
     const cleanImage = image.replace(/^\/?uploads\/profile\//, '').replace(/^\//, '');
 
     const s3Url = process.env.S3_URL || process.env.NEXT_PUBLIC_S3_URL || '';
-    return s3Url ? `${s3Url}/profile-image/${cleanImage}` : image;
+    if (s3Url) return `${s3Url}/profile-image/${cleanImage}`;
+    // Local/dev: load from the API base URL so the resource handler
+    // (/profile-image/**) actually serves the file.
+    const apiBase = process.env.BASE_URL || process.env.NEXT_PUBLIC_API_URL || '';
+    if (apiBase) return `${apiBase.replace(/\/$/, '')}/profile-image/${cleanImage}`;
+    return image;
   };
 
   const handleSaveChanges = (data) => {
@@ -460,7 +478,7 @@ const CustomerProfileSection = ({ profileDetails }) => {
                   <div>
                     <div className="text-sm text-muted-foreground mb-2">Policy Name</div>
                     <div className="text-xl font-bold text-[#0B63CE] mb-3">
-                      Library Policy
+                      {policyName}
                     </div>
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0B63CE]/10 text-[#0B63CE] rounded-full font-semibold text-sm">
                       <Award size={16} />

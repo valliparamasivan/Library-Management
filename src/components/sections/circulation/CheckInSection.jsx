@@ -297,9 +297,9 @@ const CheckInSection = () => {
                               type="button"
                               onClick={() => handleTransferClick(item)}
                               className="h-8 w-8 p-0 rounded bg-white hover:bg-gray-50 text-[#00796B] border border-gray-300 flex items-center justify-center"
-                              title="Transfer"
+                              title="Checked-In"
                             >
-                              <ImageWidget src={actionIcon} alt="Transfer" className="w-5 h-5" />
+                              <ImageWidget src={actionIcon} alt="Checked-In" className="w-5 h-5" />
                             </ButtonWidget>
                             <ButtonWidget
                               type="button"

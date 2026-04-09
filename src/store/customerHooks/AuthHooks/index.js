@@ -1,5 +1,5 @@
-import { 
-  customerSignIn, customerForgotPassword, customerChangePassword, customerValidateSecurityKey, 
+import {
+  customerSignIn, customerRegister, customerForgotPassword, customerChangePassword, customerValidateSecurityKey,
   customerProfileUpdate, customerSetGoal, getCustomerProfileDetails, getCustomerNotifications,
   markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotifications
 } from "@/store/customerServices/AuthServices";
@@ -8,6 +8,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 export const useCustomerLogin = () => {
   return useMutation({
     mutationFn: (params) => customerSignIn(params),
+  });
+};
+
+export const useCustomerRegister = () => {
+  return useMutation({
+    mutationFn: (params) => customerRegister(params),
   });
 };
 
@@ -30,8 +36,12 @@ export const useCustomerValidateSecurityKey = () => {
 };
 
 export const useCustomerProfileUpdate = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params) => customerProfileUpdate(params),
+    // Refetch the cached profile so consumers like CustomerHeader pick up
+    // the new image / name / phone immediately after a successful update.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customerProfileDetails'] }),
   });
 };
 

@@ -143,6 +143,7 @@ const ActivitylogSection = ({response}) => {
             sortable: true,
             minWidth: "120px",
             lgMinWidth: "150px",
+            render: (record) => record.bookTitle || "—",
         },
         {
             key: "rfid",
@@ -150,6 +151,7 @@ const ActivitylogSection = ({response}) => {
             sortable: true,
             minWidth: "120px",
             lgMinWidth: "150px",
+            render: (record) => record.rfid || "—",
         },
         {
             key: "activityMessage",

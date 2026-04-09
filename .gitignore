@@ -31,11 +31,11 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+# .env*
 .package-lock.json
 .yarn.lock
 .env.local
-.env
+# .env
 
 # vercel
 .vercel

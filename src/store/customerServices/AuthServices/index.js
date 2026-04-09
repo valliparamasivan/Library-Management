@@ -5,6 +5,11 @@ export const customerSignIn = async (params) => {
   return data;
 };
 
+export const customerRegister = async (params) => {
+  const { data } = await clientAxios.post("/public/customer/register", params);
+  return data;
+};
+
 export const customerForgotPassword = async (params) => {
   const { data } = await clientAxios.post("/public/reset-password-mail", params);
   return data;
