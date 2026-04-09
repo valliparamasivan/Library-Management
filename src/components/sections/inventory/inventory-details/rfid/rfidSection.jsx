@@ -22,6 +22,7 @@ import ReprintDialog from './utils/ReprintDialog';
 import TagRfid from './utils/TagRfid';
 import PrintRfidTag from './utils/PrintRfidTag';
 import usePermissions from '@/components/custom-hooks/usePermissions';
+import { getBookImageUrl } from '@/helpers/URLHelper';
 
 const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, sectionDropdown, shelfDropdown, rowDropdown }) => {
     const router = useRouter();
@@ -91,9 +92,7 @@ const RfidSection = ({ slug, bookData: apiBookData, response: apiResponse, secti
         bookImageUrl: null,
     };
 
-    const displayImageUrl = bookData?.bookImageUrl 
-        ? `https://libraryapi.corpfield.com/books-image/${bookData.bookImageUrl}` 
-        : bookImage;
+    const displayImageUrl = getBookImageUrl(bookData?.bookImageUrl) || bookImage;
 
     const mapStatusToDisplay = (status) => {
         const statusMap = {

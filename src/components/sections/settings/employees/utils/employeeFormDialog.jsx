@@ -15,6 +15,7 @@ import { useEmployeeCreate, useEmployeeUpdate } from "@/store/hooks/SettingsHook
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { getProfileImageUrl } from "@/helpers/URLHelper";
 
 const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeData }) => {
   const router = useRouter();
@@ -43,14 +44,8 @@ const EmployeeFormDialog = ({ isOpen, onOpenChange, id, rolesResponse, employeeD
 
   useEffect(() => {
     if (isOpen && id && employeeData) {
-      if (employeeData.profileImage || employeeData.profileImg) {
-        const imageStr = employeeData.profileImage || employeeData.profileImg;
-        setProfileImageUrl(
-          imageStr.startsWith("http") ? imageStr : `https://libraryapi.corpfield.com/profile-image/${imageStr}`
-        );
-      } else {
-        setProfileImageUrl(null);
-      }
+      const imageStr = employeeData.profileImage || employeeData.profileImg;
+      setProfileImageUrl(getProfileImageUrl(imageStr));
 
       reset({
         employeeName: employeeData.employeeName || "",

@@ -22,6 +22,7 @@ import usePermissions from "@/components/custom-hooks/usePermissions";
 import RenewLimitReachedModal from "./utils/RenewLimitReachedModal";
 import { useGetUserTransactions, useSearchBookOrUser, useReturnBook, useRenewBook } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
+import { getProfileImageUrl } from "@/helpers/URLHelper";
 
 const getTransactionStatusClass = (status) => {
   switch (status) {
@@ -207,6 +208,7 @@ const TransactionsSection = () => {
               internalUserId: found.internalUserId,
               status: found.status || "Active",
               statusType: found.status || "Active",
+              profileImgUrl: found.profileImgUrl,
             });
           }
         })
@@ -420,7 +422,7 @@ const TransactionsSection = () => {
               onClick={() => router.back()}
             />
             <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
-              <ImageWidget src={userImage} alt={user?.userName || ""} className="w-full h-full object-cover rounded-md" />
+              <ImageWidget src={getProfileImageUrl(user?.profileImgUrl) || userImage} alt={user?.userName || ""} className="w-full h-full object-cover rounded-md" />
             </div>
             <div className="flex flex-col min-w-0 gap-0.5">
               <div className="flex items-center gap-2 flex-wrap">

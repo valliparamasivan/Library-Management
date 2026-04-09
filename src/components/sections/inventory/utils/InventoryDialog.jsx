@@ -20,6 +20,7 @@ import { useBookCreate, useBookUpdate } from "@/store/hooks/InventoryHooks";
 import LanguageDialog from "./LanguageDialog";
 import CategoryDialog from "./CategoryDialog";
 import BookTypeDialog from "./BookTypeDialog";
+import { getBookImageUrl } from "@/helpers/URLHelper";
 
 const InventoryDialog = ({ isOpen, onOpenChange, id, bookData, languages, bookCategories, bookTypes }) => {
   const router = useRouter();
@@ -187,13 +188,8 @@ const InventoryDialog = ({ isOpen, onOpenChange, id, bookData, languages, bookCa
       const quantityValue = bookData.quantity || bookData.totalCopies || 1;
       setBookCount(quantityValue);
 
-      if (bookData.bookImageUrl || bookData.imageUrl) {
-        const imageUrl = bookData.bookImageUrl || bookData.imageUrl;
-        const fullImageUrl = `https://libraryapi.corpfield.com/books-image/${imageUrl}`;
-        setExistingImageUrl(fullImageUrl);
-      } else {
-        setExistingImageUrl(null);
-      }
+      const imageUrl = bookData.bookImageUrl || bookData.imageUrl;
+      setExistingImageUrl(getBookImageUrl(imageUrl));
 
       reset({
         image: null, 

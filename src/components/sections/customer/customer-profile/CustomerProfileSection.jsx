@@ -8,10 +8,11 @@ import { Award, Bell, CheckCircle, Mail, Phone, Save, Target, User } from 'lucid
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { useCustomerProfileUpdate, useCustomerSetGoal } from '@/store/customerHooks/AuthHooks';
 
 const CustomerProfileSection = ({ profileDetails }) => {
-  console.log(profileDetails);
+  const router = useRouter();
   const profileData = profileDetails?.data?.data || profileDetails?.data || profileDetails || {};
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
@@ -202,7 +203,7 @@ const CustomerProfileSection = ({ profileDetails }) => {
     if (!image) {
       return null;
     }
-    if (image.startsWith('data:') || image.startsWith('http')) {
+    if (image.startsWith('data:') || image.startsWith('http') || image.startsWith('blob:')) {
       return image;
     }
 
@@ -218,50 +219,76 @@ const CustomerProfileSection = ({ profileDetails }) => {
   };
 
   const handleSaveChanges = (data) => {
-    const payload = {
-      userName: data.name,
-      email: data.email,
-      phoneNumber: data.phone,
-    };
+    // Mirror the admin user-edit flow: build a multipart FormData explicitly
+    // instead of relying on axios magic. The DTO field name on the backend
+    // for the file is `profileImgUrl` (see UpdateProfileAndSettingsReqDto).
+    const formData = new FormData();
+    formData.append('userName', data.name);
+    formData.append('email', data.email);
+    formData.append('phoneNumber', data.phone);
     if (profileImageFile) {
-      payload.profileImgUrl = profileImageFile;
+      formData.append('profileImgUrl', profileImageFile);
     }
 
-    updateProfile(payload, {
-      onSuccess: (data) => {
-        toast.success(data?.message);
+    updateProfile(formData, {
+      onSuccess: (response) => {
+        toast.success(response?.message || 'Profile updated successfully');
+        // Free the local preview blob and re-pull from the server so the
+        // page (and the layout-mounted CustomerHeader) render the persisted
+        // image. The mutation's onSuccess already invalidates the React
+        // Query cache used by the header, but the profile page itself is
+        // server-rendered, so router.refresh() is what makes its prop fresh.
+        if (profileImage && profileImage.startsWith('blob:')) {
+          URL.revokeObjectURL(profileImage);
+        }
+        setProfileImage(null);
+        setProfileImageFile(null);
+        router.refresh();
       },
       onError: (err) => {
-        toast.error(err?.response?.data?.message || 'Failed to update profile');
-      }
+        toast.error(err?.data?.message || err?.response?.data?.message || 'Failed to update profile');
+      },
     });
   };
 
+  const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      toast.error('Invalid file type. Please upload JPG, PNG or GIF.');
+      event.target.value = '';
+      return;
+    }
+
     const maxSize = 2 * 1024 * 1024; // 2MB
-
-    if (!validTypes.includes(file.type)) {
-      return toast.error('Invalid file type. Please upload JPG, PNG or GIF.');
-    }
-
     if (file.size > maxSize) {
-      return toast.error('File size exceeds 2MB. Please choose a smaller file.');
+      toast.error('File size exceeds 2MB. Please choose a smaller file.');
+      event.target.value = '';
+      return;
     }
 
+    // Revoke any previous preview blob URL before creating a new one so we
+    // don't leak object URLs as the user changes their selection.
+    if (profileImage && profileImage.startsWith('blob:')) {
+      URL.revokeObjectURL(profileImage);
+    }
+    setProfileImage(URL.createObjectURL(file));
     setProfileImageFile(file);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfileImage(reader.result);
-      toast.success('Photo loaded successfully');
-    };
-    reader.onerror = () => toast.error('Error reading file. Please try again.');
-    reader.readAsDataURL(file);
+    // Allow re-selecting the same file in the picker.
+    event.target.value = '';
   };
+
+  // Clean up the last preview blob if the component unmounts mid-edit.
+  useEffect(() => {
+    return () => {
+      if (profileImage && profileImage.startsWith('blob:')) {
+        URL.revokeObjectURL(profileImage);
+      }
+    };
+  }, [profileImage]);
 
   const handleChangePhotoClick = () => {
     fileInputRef.current?.click();

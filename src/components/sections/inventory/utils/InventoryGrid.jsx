@@ -5,6 +5,7 @@ import ImageWidget from "@/components/widgets/ImageWidget";
 import { FileText, SquarePen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getStatusColor } from "@/helpers/FuntionalHelpers";
+import { getBookImageUrl } from "@/helpers/URLHelper";
 
 const InventoryGrid = ({ response, onEditClick }) => {
   const router = useRouter();
@@ -19,9 +20,7 @@ const InventoryGrid = ({ response, onEditClick }) => {
             const total = record.totalCopies ?? record.total ?? 0;
             const isZeroAvailability = available === 0;
             const catalogActive = record.catalogAvailable === true;
-            const bookImageUrl = record.bookImageUrl 
-              ? `https://libraryapi.corpfield.com/books-image/${record.bookImageUrl}` 
-              : bookImage;
+            const bookImageUrl = getBookImageUrl(record.bookImageUrl) || bookImage;
             
             return (
               <div

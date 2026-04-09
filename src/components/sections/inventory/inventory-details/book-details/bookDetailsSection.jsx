@@ -15,6 +15,7 @@ import { getStatusColor } from '@/helpers/FuntionalHelpers';
 import useErrorHandler from '@/components/custom-hooks/useErrorHandler';
 import { useBookChangeStatus } from '@/store/hooks/InventoryHooks';
 import usePermissions from '@/components/custom-hooks/usePermissions';
+import { getBookImageUrl } from '@/helpers/URLHelper';
 
 const deriveBookCatalogActive = (data) => {
     if (!data) return false;
@@ -62,9 +63,7 @@ const BookDetailsSection = ({ slug, bookData: apiBookData, languages, bookCatego
     } : null;
 
 
-    const displayImageUrl = bookData?.bookImageUrl 
-        ? `https://libraryapi.corpfield.com/books-image/${bookData.bookImageUrl}` 
-        : bookImage;
+    const displayImageUrl = getBookImageUrl(bookData?.bookImageUrl) || bookImage;
 
     const isStatusActive = deriveBookCatalogActive(bookData);
 

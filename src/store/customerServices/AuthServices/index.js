@@ -26,7 +26,14 @@ export const customerValidateSecurityKey = async (params) => {
 };
 
 export const customerProfileUpdate = async (params) => {
-  const { data } = await clientAxios.putForm("/profile-settings/profile-update", params);
+  // Caller passes a ready-built FormData (mirrors how the admin user-edit
+  // flow builds its multipart payload). We send it as a plain put with the
+  // isMultipart flag so the request interceptor strips the default JSON
+  // Content-Type and lets the browser set the multipart boundary.
+  const { data } = await clientAxios.put("/profile-settings/profile-update", params, {
+    isMultipart: true,
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };
 

@@ -25,6 +25,7 @@ import CheckInDialog from '@/components/sections/inventory/inventory-details/loa
 import RenewConfirmDialog from '@/components/sections/inventory/inventory-details/loan/utils/RenewConfirmDialog';
 import TransferSuccessDialog from '@/components/sections/inventory/inventory-details/loan/utils/CheckinSuccesPopup';
 import RenewSuccessDialog from '@/components/sections/inventory/inventory-details/loan/utils/RenewSuccessPopup';
+import { getBookImageUrl } from '@/helpers/URLHelper';
 
 
 const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
@@ -115,9 +116,7 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
 
     const bookTitle = apiBookData?.data?.title || "Untitled";
     const bookImageUrl = apiBookData?.data?.bookImageUrl || null;
-    const displayImageUrl = bookImageUrl
-        ? `https://libraryapi.corpfield.com/books-image/${bookImageUrl}`
-        : bookImage;
+    const displayImageUrl = getBookImageUrl(bookImageUrl) || bookImage;
 
     const mappedContent = useMemo(() => {
         const content = loansResponse?.data?.content ?? [];

@@ -17,6 +17,7 @@ import UserDialog from './utils/userFormDialog';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
 import UserStatusFilter from './utils/UserStatusFilter';
 import usePermissions from '@/components/custom-hooks/usePermissions';
+import { getProfileImageUrl } from '@/helpers/URLHelper';
 
 const formatJoiningDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -37,11 +38,11 @@ const mapApiStatusToDisplay = (status) => {
   return { label: status || '—', statusType: status || '' };
 };
 
-/** Same pattern as book details: `books-image/${bookImageUrl}` → `users-image/${profileImgUrl}`. */
+/** Resolve a stored profile image to a renderable URL, falling back to the
+ *  default user placeholder. Uses the shared getProfileImageUrl helper so the
+ *  list, details page, and customer-facing pages all build the same URL. */
 const userDisplayImageUrl = (profileImgUrl) =>
-  profileImgUrl
-    ? `https://libraryapi.corpfield.com/profile-image/${profileImgUrl}`
-    : userImage;
+  getProfileImageUrl(profileImgUrl) || userImage;
 
 /** URL `type`: 1 = Today, 2 = This Week, 3 = This Month, 4 = Custom Range */
 const parseDateFilterType = (v) => {

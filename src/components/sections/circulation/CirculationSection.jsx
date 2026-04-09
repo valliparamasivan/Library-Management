@@ -18,6 +18,7 @@ import usePermissions from "@/components/custom-hooks/usePermissions";
 import useScannerStatus from "@/components/custom-hooks/useScannerStatus";
 import { useSearchBookOrUser, useGetUserTransactions, useReturnBook, useRenewBook, useScanUser } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
+import { getProfileImageUrl } from "@/helpers/URLHelper";
 import userImage from '@/assets/image/user.png';
 import actionIcon from "@/assets/icons/19.svg";
 import TransferDialog from "./utils/transferDialog";
@@ -866,7 +867,7 @@ const CirculationSection = () => {
                     className="w-full bg-white border border-gray-200 rounded-lg p-4 flex items-center gap-4 hover:border-[#00796B] hover:shadow-md transition-all text-left"
                   >
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-[#0B63CE] to-[#00A884] flex-shrink-0">
-                      <ImageWidget src={user.profileImgUrl || userImage} alt={user.name || "User"} className="w-full h-full object-cover" />
+                      <ImageWidget src={getProfileImageUrl(user.profileImgUrl) || userImage} alt={user.name || "User"} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-gray-900 truncate">
@@ -936,7 +937,7 @@ const CirculationSection = () => {
                     {/* PROFILE PICTURE */}
                     <div className="flex-shrink-0">
                       <div className="w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-[#0B63CE] to-[#00A884]">
-                        <ImageWidget src={searchResult.profileImgUrl || userImage} alt={searchResult.name || "User"} className="w-full h-full object-cover" />
+                        <ImageWidget src={getProfileImageUrl(searchResult.profileImgUrl) || userImage} alt={searchResult.name || "User"} className="w-full h-full object-cover" />
                       </div>
                     </div>
 

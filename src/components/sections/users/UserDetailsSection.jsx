@@ -21,6 +21,7 @@ import useURLParams from '@/components/custom-hooks/useURLParams';
 import DateRangePicker from '@/components/widgets/DateRangePicker';
 import { endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 import usePermissions from '@/components/custom-hooks/usePermissions';
+import { getProfileImageUrl } from '@/helpers/URLHelper';
 
 const BARCODE_BARS = [2, 1, 2, 3, 1, 2, 1, 2, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2];
 
@@ -161,9 +162,7 @@ const UserDetailsSection = ({ id, userResponse, policyResponse, transactionsResp
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
 
-  const displayImageUrl = profileImageUrl || (user.profileImage
-    ? (user.profileImage.startsWith('http') ? user.profileImage : `https://libraryapi.corpfield.com/profile-image/${user.profileImage}`)
-    : userImage);
+  const displayImageUrl = profileImageUrl || getProfileImageUrl(user.profileImage) || userImage;
 
   const profileImageInputRef = useRef(null);
 
