@@ -50,9 +50,13 @@ export const BookCard = ({ book}) => {
           by {book.author}{book.year ? ` - ${book.year}` : ''}
         </p>
         
-          <p className="text-xs text-black line-clamp-1">
-            {book.subject || "-"}
-          </p>
+          <div className="w-full max-w-[200px] sm:max-w-[260px] min-w-0">
+            <TooltipWidget content={book.subject || "-"}>
+              <p className="text-xs text-black truncate">
+                {book.subject || "-"}
+              </p>
+            </TooltipWidget>
+          </div>
 
           <div className="flex items-center gap-2 text-sm text-black">
             <Globe className="w-4 h-4 text-[#1976D2]" />

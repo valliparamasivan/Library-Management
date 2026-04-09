@@ -387,9 +387,13 @@ const CatalogSection = ({ booksList, languages, bookCategories }) => {
                 </TooltipWidget>
               </div>
 
-              <p className="text-xs sm:text-xs text-black pb-2 line-clamp-1">
-                {book.subject}
-              </p>
+              <div className="w-full max-w-[200px] sm:max-w-[250px] min-w-0">
+                <TooltipWidget content={book.subject}>
+                  <p className="text-xs sm:text-xs text-black pb-2 truncate">
+                    {book.subject}
+                  </p>
+                </TooltipWidget>
+              </div>
 
               <div className="flex items-center gap-1.5 text-xs sm:text-sm pb-2 text-gray-700">
                 <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-[#0B63CE] flex-shrink-0" />
