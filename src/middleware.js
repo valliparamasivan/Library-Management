@@ -88,6 +88,8 @@ export default withAuth(
       "/circulation",
       "/loans",
       "/fines",
+      "/book-reviews",
+      "/reserved-books",
       "/reports",
       "/settings",
       "/users",

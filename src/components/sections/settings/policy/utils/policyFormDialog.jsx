@@ -27,6 +27,8 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
       loanPeriodDays: "",
       finePerDay: "",
       maxRenewalPerBook: "",
+      reservationLimit: "",
+      reservationHoldPeriodDays: "",
       active: 0,
     },
   });
@@ -43,6 +45,8 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
         loanPeriodDays: policyData.loanPeriodDays,
         finePerDay: policyData.finePerDay,
         maxRenewalPerBook: policyData.maxRenewalPerBook,
+        reservationLimit: policyData.reservationLimit || "",
+        reservationHoldPeriodDays: policyData.reservationHoldPeriodDays || "",
         active: policyData.active ? 1 : 0,
       });
     } else if (isOpen && !id) {
@@ -52,6 +56,8 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
         loanPeriodDays: "",
         finePerDay: "",
         maxRenewalPerBook: "",
+        reservationLimit: "",
+        reservationHoldPeriodDays: "",
         active: 0,
       });
     }
@@ -66,6 +72,8 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
         loanPeriodDays: parseInt(data.loanPeriodDays) || 0,
         finePerDay: parseFloat(data.finePerDay) || 0,
         maxRenewalPerBook: parseInt(data.maxRenewalPerBook) || 0,
+        reservationLimit: parseInt(data.reservationLimit) || 0,
+        reservationHoldPeriodDays: parseInt(data.reservationHoldPeriodDays) || 0,
         active: data.active === 1,
       };
       
@@ -98,7 +106,7 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChangeInternal}>
-      <DialogContent hideClose className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl p-0 border-0 max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent hideClose className="w-[calc(100%-2rem)] sm:max-w-xl rounded-2xl p-0 border-0 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 pt-4 border-b pb-2 border-[#E6E6E6]">
           <DialogTitle className="text-lg font-semibold text-gray-900">
             {isEditMode ? "Edit Policy" : "Add Policy"}
@@ -116,16 +124,22 @@ const PolicyFormDialog = ({ isOpen, onOpenChange, id, policyData }) => {
           <div className="px-6 overflow-y-auto flex-1 min-h-0 pb-2">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Policy Information</h3>
             <div className="space-y-4">
-              <FormInput control={control} name="policyName" label="Policy Name" placeholder="Enter Policy Name" required />
-              <FormInput control={control} name="maxBooksAllowed" label="Maximum Books Allowed" placeholder="Enter Count" type="number" required />
-              <FormInput control={control} name="loanPeriodDays" label="Loan Period (Days)" placeholder="Enter Days" type="number" required />
-              <FormInput control={control} name="finePerDay" label="Fine per Day" placeholder="0.0" type="number" required />
-              <FormInput control={control} name="maxRenewalPerBook" label="Maximum Renewals per Book" placeholder="Enter Count" type="number" required />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <FormInput control={control} name="policyName" label="Policy Name" placeholder="Enter Policy Name" required />
+                </div>
+                <FormInput control={control} name="maxBooksAllowed" label="Maximum Books Allowed" placeholder="Enter Count" type="number" required />
+                <FormInput control={control} name="loanPeriodDays" label="Loan Period (Days)" placeholder="Enter Days" type="number" required />
+                <FormInput control={control} name="finePerDay" label="Fine per Day" placeholder="0.0" type="number" required />
+                <FormInput control={control} name="maxRenewalPerBook" label="Max Renewals per Book" placeholder="Enter Count" type="number" required />
+                <FormInput control={control} name="reservationLimit" label="Reservation Limit" placeholder="Enter Limit" type="number" />
+                <FormInput control={control} name="reservationHoldPeriodDays" label="Hold Period (Days)" placeholder="Enter Days" type="number" />
+              </div>
               {isEditMode && <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                <FormSwitch 
-                  control={control} 
-                  name="active" 
-                  label="Status" 
+                <FormSwitch
+                  control={control}
+                  name="active"
+                  label="Status"
                   switchPosition="right"
                   labelclassName="text-sm font-medium text-gray-900"
                 />

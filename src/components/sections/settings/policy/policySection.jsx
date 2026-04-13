@@ -39,6 +39,8 @@ const PolicySection = ({ response }) => {
             "loanPeriodDays",
             "finePerDay",
             "maxRenewalPerBook",
+            "reservationLimit",
+            "reservationHoldPeriodDays",
             "active",
             "actions",
         ],
@@ -118,6 +120,26 @@ const PolicySection = ({ response }) => {
             sortable: false,
             minWidth: "120px",
             lgMinWidth: "150px",
+        },
+        {
+            key: "reservationLimit",
+            label: "Reservation Limit",
+            sortable: false,
+            minWidth: "120px",
+            lgMinWidth: "150px",
+            render: (record) => (
+                <span className="text-sm text-gray-900">{record.reservationLimit ?? "-"}</span>
+            ),
+        },
+        {
+            key: "reservationHoldPeriodDays",
+            label: "Hold Period (Days)",
+            sortable: false,
+            minWidth: "120px",
+            lgMinWidth: "150px",
+            render: (record) => (
+                <span className="text-sm text-gray-900">{record.reservationHoldPeriodDays ?? "-"}</span>
+            ),
         },
         {
             key: "active",

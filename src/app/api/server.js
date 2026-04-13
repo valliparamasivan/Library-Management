@@ -217,6 +217,42 @@ export async function getAllRolesDropdown() {
   }
 }
 
+export async function getAdminReservedList(searchParams) {
+  try {
+    const response = await serverAxios.get("/admin/reserved/list", {
+      params: {
+        searchKey: searchParams.searchKey || "",
+        status: searchParams.status || "",
+        pageNumber: searchParams.pageNumber || 0,
+        pageSize: searchParams.pageSize || 10,
+        sortField: searchParams.sortField || "reservedDate",
+        sortOrder: searchParams.sortOrder || "desc",
+      },
+    });
+    return response;
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function getAdminReviewList(searchParams) {
+  try {
+    const response = await serverAxios.get("/admin/reviews/list", {
+      params: {
+        searchKey: searchParams.searchKey || "",
+        rating: searchParams.rating || "",
+        pageNumber: searchParams.pageNumber || 0,
+        pageSize: searchParams.pageSize || 10,
+        sortField: searchParams.sortField || "createdAt",
+        sortOrder: searchParams.sortOrder || "desc",
+      },
+    });
+    return response;
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function getFineList(searchParams) {
   try {
     const response = await serverAxios.get("/fines/list", {

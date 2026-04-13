@@ -99,6 +99,16 @@ export const PolicyFormSchema = z.object({
     const numVal = typeof val === 'string' ? parseFloat(val) : val;
     return !isNaN(numVal) && numVal > 0;
   }, "Maximum Renewals is required"),
+  reservationLimit: z.union([z.string(), z.number()]).optional().refine((val) => {
+    if (val === "" || val === undefined || val === null) return true;
+    const numVal = typeof val === 'string' ? parseFloat(val) : val;
+    return !isNaN(numVal) && numVal >= 0;
+  }, "Must be a valid number"),
+  reservationHoldPeriodDays: z.union([z.string(), z.number()]).optional().refine((val) => {
+    if (val === "" || val === undefined || val === null) return true;
+    const numVal = typeof val === 'string' ? parseFloat(val) : val;
+    return !isNaN(numVal) && numVal >= 0;
+  }, "Must be a valid number"),
   active: z.union([z.boolean(), z.number()]).optional(),
 });
 
