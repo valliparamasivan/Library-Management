@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { SquarePen, Plus, FileText, BookMinus } from "lucide-react";
+import { SquarePen, Plus, FileText, BookMinus, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import useURLParams from "@/components/custom-hooks/useURLParams";
 import PageLayout from "@/components/layouts/PageLayout";
@@ -16,6 +16,7 @@ import ButtonWidget from "@/components/widgets/ButtonWidget";
 import { getStatusColor } from "@/helpers/FuntionalHelpers";
 import logo from "@/assets/image/book.png";
 import InventoryDialog from "@/components/sections/inventory/utils/InventoryDialog";
+import BulkImportDialog from "@/components/sections/inventory/utils/BulkImportDialog";
 import InventoryFilterWidget from "@/components/widgets/InventoryFilterWidget";
 import LinkWidget from "@/components/widgets/LinkWidget";
 import usePermissions from "@/components/custom-hooks/usePermissions";
@@ -50,6 +51,7 @@ const InventorySection = ({ response, languages, bookCategories, bookTypes, publ
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedBookData, setSelectedBookData] = useState(null);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const breadcrumbs = [
     { label: "Catalog & Inventory", href: "/inventory" },
@@ -304,19 +306,35 @@ const defaultColumns = [
               hideFilter={true}
             /> */}
             {canAddInventory && (
-              <ButtonWidget
-                onClick={handleAddNew}
-                className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4 text-white" />
-                Add New
-              </ButtonWidget>
+              <>
+                <ButtonWidget
+                  onClick={() => setIsBulkImportOpen(true)}
+                  className="h-9 px-3 rounded-sm bg-white hover:bg-gray-50 text-[#00796B] border border-[#00796B] shadow-sm flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Bulk Import
+                </ButtonWidget>
+                <ButtonWidget
+                  onClick={handleAddNew}
+                  className="h-9 px-3 rounded-sm bg-[#00796B] hover:bg-[#00796B]/90 text-white border-0 shadow-sm flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                  Add New
+                </ButtonWidget>
+              </>
             )}
             <InventoryDialog
               isOpen={isDialogOpen}
               onOpenChange={handleDialogOpenChange}
               id={editingId}
               bookData={selectedBookData}
+              languages={languages}
+              bookCategories={bookCategories}
+              bookTypes={bookTypes}
+            />
+            <BulkImportDialog
+              isOpen={isBulkImportOpen}
+              onOpenChange={setIsBulkImportOpen}
               languages={languages}
               bookCategories={bookCategories}
               bookTypes={bookTypes}

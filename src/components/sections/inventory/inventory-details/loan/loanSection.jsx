@@ -22,6 +22,7 @@ import RenewLimitReachedModal from './utils/RenewLimitReachedModal';
 import LoanStatusFilter from './utils/loanStatusFilter';
 import RenewalHistoryDialog from './utils/renewalHistoryDialog';
 import CheckInDialog from '@/components/sections/inventory/inventory-details/loan/utils/CheckInDialog';
+import FineConfirmDialog from '@/components/sections/loans/utils/FineConfirmDialog';
 import RenewConfirmDialog from '@/components/sections/inventory/inventory-details/loan/utils/RenewConfirmDialog';
 import TransferSuccessDialog from '@/components/sections/inventory/inventory-details/loan/utils/CheckinSuccesPopup';
 import RenewSuccessDialog from '@/components/sections/inventory/inventory-details/loan/utils/RenewSuccessPopup';
@@ -46,6 +47,7 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
     const [renewLimitUser, setRenewLimitUser] = useState({ userName: "", userDetailId: "" });
     const [isRenewalHistoryDialogOpen, setIsRenewalHistoryDialogOpen] = useState(false);
     const [selectedRenewalHistory, setSelectedRenewalHistory] = useState([]);
+    const [isFineDialogOpen, setIsFineDialogOpen] = useState(false);
 
     const extractErrorMessage = (error, fallback) => {
         const errData = error?.data || error?.response?.data;
@@ -62,8 +64,41 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
             await returnBookApi({
                 userId: String(selectedBookData?.internalUserId),
                 rfidList: [selectedBookData?.rfid],
+                payFine: false,
             });
             setIsTransferDialogOpen(false);
+            setIsTransferSuccessOpen(true);
+            router.refresh();
+        } catch (error) {
+            showErrorToast(extractErrorMessage(error, "Check-in failed"));
+        }
+    };
+
+    const handleFineConfirm = async (paymentMethod) => {
+        try {
+            await returnBookApi({
+                userId: String(selectedBookData?.internalUserId),
+                rfidList: [selectedBookData?.rfid],
+                payFine: true,
+                paymentMethod,
+            });
+            setIsFineDialogOpen(false);
+            setIsTransferSuccessOpen(true);
+            router.refresh();
+        } catch (error) {
+            showErrorToast(extractErrorMessage(error, "Check-in failed"));
+        }
+    };
+
+    const handleWaiveConfirm = async (reason) => {
+        try {
+            await returnBookApi({
+                userId: String(selectedBookData?.internalUserId),
+                rfidList: [selectedBookData?.rfid],
+                waiveFine: true,
+                waivedReason: reason,
+            });
+            setIsFineDialogOpen(false);
             setIsTransferSuccessOpen(true);
             router.refresh();
         } catch (error) {
@@ -380,8 +415,13 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
                 const isRenewDisabled = isRenewDisabledByStatus || isRenewLimitReached;
 
                 const handleReturnClick = () => {
+                    const isOverdueRecord = ["overdue"].includes(status);
                     setSelectedBookData({ ...record, fullName: record.fullName || record.userName, userDetailId: record.userDetailId || record.userId });
-                    setIsTransferDialogOpen(true);
+                    if (isOverdueRecord) {
+                        setIsFineDialogOpen(true);
+                    } else {
+                        setIsTransferDialogOpen(true);
+                    }
                 };
                 const handleRenewClick = () => {
                     if (isRenewDisabled) {
@@ -631,6 +671,18 @@ const LoanSection = ({ slug, loansResponse, bookData: apiBookData }) => {
                         overdueDays: selectedBookData.overdueDays || 0
                     } : null}
                     onConfirm={handleTransferConfirm}
+                />
+                <FineConfirmDialog
+                    isOpen={isFineDialogOpen}
+                    onOpenChange={setIsFineDialogOpen}
+                    item={selectedBookData ? {
+                        title: selectedBookData.bookTitle || selectedBookData.title,
+                        refId: selectedBookData.rfid || selectedBookData.refId,
+                        overdueDays: selectedBookData.overdueDays || 0,
+                        fineAmount: Number(selectedBookData.fineAmount || selectedBookData.fine || 0),
+                    } : null}
+                    onConfirm={handleFineConfirm}
+                    onWaive={handleWaiveConfirm}
                 />
                 <TransferSuccessDialog
                     isOpen={isTransferSuccessOpen}

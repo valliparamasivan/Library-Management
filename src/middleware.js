@@ -87,6 +87,7 @@ export default withAuth(
       "/inventory",
       "/circulation",
       "/loans",
+      "/fines",
       "/reports",
       "/settings",
       "/users",

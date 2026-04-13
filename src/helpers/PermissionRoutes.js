@@ -9,13 +9,14 @@ const ROUTE_TO_PERMISSIONS = {
   "/inventory": ["inventory"],
   "/circulation": ["circulation check-in", "circulation check-out"],
   "/loans": ["loans"],
+  "/fines": ["fines"],
   "/users": ["users"],
   "/settings": ["settings", "roles", "roles & permissions", "policy", "location", "employees"],
   "/reports": ["report users", "report loans", "report inventory"],
   "/activitylog": ["activity log"],
 };
 
-const ROUTE_ORDER = ["/dashboard", "/inventory", "/circulation", "/loans", "/users", "/settings", "/reports", "/activitylog"];
+const ROUTE_ORDER = ["/dashboard", "/inventory", "/circulation", "/loans", "/fines", "/users", "/settings", "/reports", "/activitylog"];
 
 /**
  * Checks if a user has view permission for a given route.

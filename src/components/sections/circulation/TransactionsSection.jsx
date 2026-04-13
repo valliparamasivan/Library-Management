@@ -20,6 +20,7 @@ import RenewBookDueDateDialog from "./utils/renewBookDueDateDialog";
 import RenewSuccessDialog from "./utils/renewSuccessDialog";
 import usePermissions from "@/components/custom-hooks/usePermissions";
 import RenewLimitReachedModal from "./utils/RenewLimitReachedModal";
+import FineConfirmDialog from "@/components/sections/loans/utils/FineConfirmDialog";
 import { useGetUserTransactions, useSearchBookOrUser, useReturnBook, useRenewBook } from "@/store/hooks/CirculationHooks";
 import useErrorHandler from "@/components/custom-hooks/useErrorHandler";
 import { getProfileImageUrl } from "@/helpers/URLHelper";
@@ -72,6 +73,7 @@ const TransactionsSection = () => {
   const [selectedItemForRenew, setSelectedItemForRenew] = useState(null);
   const [isRenewSuccessOpen, setIsRenewSuccessOpen] = useState(false);
   const [isRenewLimitModalOpen, setIsRenewLimitModalOpen] = useState(false);
+  const [isFineDialogOpen, setIsFineDialogOpen] = useState(false);
 
   const breadcrumbs = [
     { label: "Circulation", href: "/circulation" },
@@ -218,15 +220,28 @@ const TransactionsSection = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  const parseFineValue = (val) => {
+    if (typeof val === "number") return val;
+    if (typeof val === "string") return parseFloat(val.replace(/[^0-9.\-]/g, "")) || 0;
+    return 0;
+  };
+
   const handleTransferClick = (record) => {
+    const isOverdue = record.status === "Overdue";
     const item = {
       title: record.bookTitle,
       refId: record.rfid,
       dueDate: record.dueDate,
-      status: record.status === "Overdue" ? "overdue" : "onTime",
+      status: isOverdue ? "overdue" : "onTime",
+      overdueDays: record.overdueDays || 0,
+      fineAmount: parseFineValue(record.fineAmount ?? record.fine),
     };
     setSelectedItemForTransfer(item);
-    setIsTransferDialogOpen(true);
+    if (isOverdue) {
+      setIsFineDialogOpen(true);
+    } else {
+      setIsTransferDialogOpen(true);
+    }
   };
 
   const handleTransferConfirm = async () => {
@@ -234,11 +249,46 @@ const TransactionsSection = () => {
       await returnBookApi({
         userId: String(internalUserIdParam),
         rfidList: [selectedItemForTransfer?.refId],
+        payFine: false,
       });
       setIsTransferDialogOpen(false);
       showSuccessToast("Book checked in successfully");
       fetchTransactions();
     } catch (error) {
+      showErrorToast(error);
+    }
+  };
+
+  const handleFineConfirm = async (paymentMethod) => {
+    try {
+      await returnBookApi({
+        userId: String(internalUserIdParam),
+        rfidList: [selectedItemForTransfer?.refId],
+        payFine: true,
+        paymentMethod,
+      });
+      setIsFineDialogOpen(false);
+      showSuccessToast("Book checked in and fine collected successfully");
+      fetchTransactions();
+    } catch (error) {
+      setIsFineDialogOpen(false);
+      showErrorToast(error);
+    }
+  };
+
+  const handleWaiveConfirm = async (reason) => {
+    try {
+      await returnBookApi({
+        userId: String(internalUserIdParam),
+        rfidList: [selectedItemForTransfer?.refId],
+        waiveFine: true,
+        waivedReason: reason,
+      });
+      setIsFineDialogOpen(false);
+      showSuccessToast("Book checked in and fine waived");
+      fetchTransactions();
+    } catch (error) {
+      setIsFineDialogOpen(false);
       showErrorToast(error);
     }
   };
@@ -490,6 +540,19 @@ const TransactionsSection = () => {
         item={selectedItemForTransfer}
         onConfirm={handleTransferConfirm}
         isLoading={isReturningBook}
+      />
+      <FineConfirmDialog
+        isOpen={isFineDialogOpen}
+        onOpenChange={setIsFineDialogOpen}
+        item={selectedItemForTransfer ? {
+          title: selectedItemForTransfer.title,
+          refId: selectedItemForTransfer.refId,
+          overdueDays: selectedItemForTransfer.overdueDays || 0,
+          fineAmount: selectedItemForTransfer.fineAmount || 0,
+        } : null}
+        onConfirm={handleFineConfirm}
+        onWaive={handleWaiveConfirm}
+        loading={isReturningBook}
       />
       <TransferSuccessDialog
         isOpen={isTransferSuccessOpen}

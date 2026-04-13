@@ -216,3 +216,21 @@ export async function getAllRolesDropdown() {
     return handleApiError(error);
   }
 }
+
+export async function getFineList(searchParams) {
+  try {
+    const response = await serverAxios.get("/fines/list", {
+      params: {
+        searchKey: searchParams.searchKey || "",
+        status: searchParams.status || "",
+        pageNumber: searchParams.pageNumber || 0,
+        pageSize: searchParams.pageSize || 10,
+        sortField: searchParams.sortField || "fineCreatedAt",
+        sortOrder: searchParams.sortOrder || "desc",
+      },
+    });
+    return response;
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

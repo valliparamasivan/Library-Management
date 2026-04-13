@@ -87,3 +87,17 @@ export const printRfidTagsZpl = async (rfidTagIds) => {
   const { data } = await clientAxios.post("/zpl/dispatch", { rfidTagIds });
   return data;
 };
+
+export const bulkImportBooks = async (formData) => {
+  const { data } = await clientAxios.post("/book/bulkImport", formData, {
+    isMultipart: true,
+  });
+  return data;
+};
+
+export const downloadBulkImportTemplate = async () => {
+  const response = await clientAxios.get("/book/bulkImport/template", {
+    responseType: "blob",
+  });
+  return response.data;
+};

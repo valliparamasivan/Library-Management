@@ -27,6 +27,7 @@ import RenewBookDueDateDialog from "./utils/renewBookDueDateDialog";
 import RenewSuccessDialog from "./utils/renewSuccessDialog";
 import RenewLimitReachedModal from "./utils/RenewLimitReachedModal";
 import ReturnDialog from "./utils/returnDialog";
+import FineConfirmDialog from "@/components/sections/loans/utils/FineConfirmDialog";
 
 const ScannerStatusPill = ({ label, connected, supported }) => {
   // Three states:
@@ -136,6 +137,7 @@ const CirculationSection = () => {
   const [isRenewLimitModalOpen, setIsRenewLimitModalOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [selectedItemForReturn, setSelectedItemForReturn] = useState(null);
+  const [isFineDialogOpen, setIsFineDialogOpen] = useState(false);
 
   // Scanner connection status (live, via WebHID)
   const {
@@ -442,16 +444,29 @@ const CirculationSection = () => {
     refreshTransactions();
   };
 
+  const parseFineValue = (val) => {
+    if (typeof val === "number") return val;
+    if (typeof val === "string") return parseFloat(val.replace(/[^0-9.\-]/g, "")) || 0;
+    return 0;
+  };
+
   const handleTransferClick = (record) => {
+    const isOverdue = record.status === "Overdue";
     const item = {
       title: record.bookTitle,
       refId: record.rfid,
       dueDate: record.dueDate,
-      status: record.status === "Overdue" ? "overdue" : "onTime",
+      status: isOverdue ? "overdue" : "onTime",
+      overdueDays: record.overdueDays || 0,
+      fineAmount: parseFineValue(record.fineAmount ?? record.fine),
       userId: searchResult?.internalUserId,
     };
     setSelectedItemForTransfer(item);
-    setIsTransferDialogOpen(true);
+    if (isOverdue) {
+      setIsFineDialogOpen(true);
+    } else {
+      setIsTransferDialogOpen(true);
+    }
   };
 
   const handleTransferConfirm = async () => {
@@ -459,6 +474,7 @@ const CirculationSection = () => {
       await returnBookApi({
         userId: String(selectedItemForTransfer?.userId),
         rfidList: [selectedItemForTransfer?.refId],
+        payFine: false,
       });
       setIsTransferDialogOpen(false);
       showSuccessToast("Book checked in successfully");
@@ -479,6 +495,64 @@ const CirculationSection = () => {
         if (firstFieldMessage) {
           message = firstFieldMessage;
         }
+      }
+      showErrorToast(message);
+    }
+  };
+
+  const handleFineConfirm = async (paymentMethod) => {
+    try {
+      await returnBookApi({
+        userId: String(selectedItemForTransfer?.userId),
+        rfidList: [selectedItemForTransfer?.refId],
+        payFine: true,
+        paymentMethod,
+      });
+      setIsFineDialogOpen(false);
+      showSuccessToast("Book checked in and fine collected successfully");
+      if (showTransactions && searchResult?.internalUserId) {
+        refreshTransactions();
+      }
+      if (searchMode === "book-name" && searchValue?.trim()) {
+        handleSearch(loanFilter);
+      }
+    } catch (error) {
+      setIsFineDialogOpen(false);
+      const errData = error?.data || error?.response?.data;
+      const fieldErrors = errData?.errorMessages;
+      let message = errData?.message || error?.message || "Failed to check in book";
+      if (fieldErrors) {
+        const firstFieldMessage = Object.values(fieldErrors).flat().filter(Boolean)[0];
+        if (firstFieldMessage) message = firstFieldMessage;
+      }
+      showErrorToast(message);
+    }
+  };
+
+  const handleWaiveConfirm = async (reason) => {
+    try {
+      await returnBookApi({
+        userId: String(selectedItemForTransfer?.userId),
+        rfidList: [selectedItemForTransfer?.refId],
+        waiveFine: true,
+        waivedReason: reason,
+      });
+      setIsFineDialogOpen(false);
+      showSuccessToast("Book checked in and fine waived");
+      if (showTransactions && searchResult?.internalUserId) {
+        refreshTransactions();
+      }
+      if (searchMode === "book-name" && searchValue?.trim()) {
+        handleSearch(loanFilter);
+      }
+    } catch (error) {
+      setIsFineDialogOpen(false);
+      const errData = error?.data || error?.response?.data;
+      const fieldErrors = errData?.errorMessages;
+      let message = errData?.message || error?.message || "Failed to check in book";
+      if (fieldErrors) {
+        const firstFieldMessage = Object.values(fieldErrors).flat().filter(Boolean)[0];
+        if (firstFieldMessage) message = firstFieldMessage;
       }
       showErrorToast(message);
     }
@@ -536,15 +610,22 @@ const CirculationSection = () => {
   };
 
   const handleReturnClick = (copy, bookTitle) => {
+    const isOverdue = copy.statusBadge === "Overdue" || copy.overdueDays > 0;
     const item = {
       title: bookTitle,
       refId: copy.rfid || copy.isbn,
       dueDate: copy.dueDate,
-      status: copy.statusBadge === "Overdue" || copy.overdueDays > 0 ? "overdue" : "onTime",
+      status: isOverdue ? "overdue" : "onTime",
+      overdueDays: copy.overdueDays || 0,
+      fineAmount: parseFineValue(copy.fineAmount ?? copy.fine),
       userId: copy.userId,
     };
     setSelectedItemForTransfer(item);
-    setIsTransferDialogOpen(true);
+    if (isOverdue) {
+      setIsFineDialogOpen(true);
+    } else {
+      setIsTransferDialogOpen(true);
+    }
   };
 
   const handleReturnConfirm = () => {
@@ -1428,6 +1509,19 @@ const CirculationSection = () => {
           item={selectedItemForTransfer}
           onConfirm={handleTransferConfirm}
           isLoading={isReturningBook}
+        />
+        <FineConfirmDialog
+          isOpen={isFineDialogOpen}
+          onOpenChange={setIsFineDialogOpen}
+          item={selectedItemForTransfer ? {
+            title: selectedItemForTransfer.title,
+            refId: selectedItemForTransfer.refId,
+            overdueDays: selectedItemForTransfer.overdueDays || 0,
+            fineAmount: selectedItemForTransfer.fineAmount || 0,
+          } : null}
+          onConfirm={handleFineConfirm}
+          onWaive={handleWaiveConfirm}
+          loading={isReturningBook}
         />
         <TransferSuccessDialog
           isOpen={isTransferSuccessOpen}

@@ -3,6 +3,7 @@
 import useURLParams from '@/components/custom-hooks/useURLParams';
 import PageLayout from '@/components/layouts/PageLayout';
 import CheckInDialog from '@/components/sections/loans/utils/CheckInDialog';
+import FineConfirmDialog from '@/components/sections/loans/utils/FineConfirmDialog';
 import ConfirmSuccessPopup from '@/components/sections/loans/utils/ConfirmSuccessPopup';
 import LoanStatusFilter from '@/components/sections/loans/utils/LoanStatusFilter';
 import RenewConfirmDialog from '@/components/sections/loans/utils/RenewConfirmDialog';
@@ -40,6 +41,7 @@ const LoansSection = ({ response }) => {
   const [selectedCheckInUserData, setSelectedCheckInUserData] = useState(null);
   const [isRenewLimitModalOpen, setIsRenewLimitModalOpen] = useState(false);
   const [renewLimitUser, setRenewLimitUser] = useState({ userName: "", userDetailId: "" });
+  const [isFineDialogOpen, setIsFineDialogOpen] = useState(false);
   
   const {
     page: currentPage,
@@ -121,12 +123,63 @@ const LoansSection = ({ response }) => {
       await returnBookApi({
         userId: selectedCheckInUserData?.assignedUserId,
         rfidList: [selectedCheckInUserData?.rfid],
+        payFine: false,
       });
       setIsCheckInDialogOpen(false);
       setIsCheckInSuccessOpen(true);
       router.refresh();
     } catch (error) {
       setIsCheckInDialogOpen(false);
+      const errorMessages = error?.data?.errorMessages || error?.errorMessages;
+      if (errorMessages) {
+        const firstMessage = Object.values(errorMessages).flat()[0];
+        if (firstMessage) {
+          showErrorToast(firstMessage);
+          return;
+        }
+      }
+      showErrorToast(error);
+    }
+  };
+
+  const handleFineConfirm = async (paymentMethod) => {
+    try {
+      await returnBookApi({
+        userId: selectedCheckInUserData?.assignedUserId,
+        rfidList: [selectedCheckInUserData?.rfid],
+        payFine: true,
+        paymentMethod,
+      });
+      setIsFineDialogOpen(false);
+      setIsCheckInSuccessOpen(true);
+      router.refresh();
+    } catch (error) {
+      setIsFineDialogOpen(false);
+      const errorMessages = error?.data?.errorMessages || error?.errorMessages;
+      if (errorMessages) {
+        const firstMessage = Object.values(errorMessages).flat()[0];
+        if (firstMessage) {
+          showErrorToast(firstMessage);
+          return;
+        }
+      }
+      showErrorToast(error);
+    }
+  };
+
+  const handleWaiveConfirm = async (reason) => {
+    try {
+      await returnBookApi({
+        userId: selectedCheckInUserData?.assignedUserId,
+        rfidList: [selectedCheckInUserData?.rfid],
+        waiveFine: true,
+        waivedReason: reason,
+      });
+      setIsFineDialogOpen(false);
+      setIsCheckInSuccessOpen(true);
+      router.refresh();
+    } catch (error) {
+      setIsFineDialogOpen(false);
       const errorMessages = error?.data?.errorMessages || error?.errorMessages;
       if (errorMessages) {
         const firstMessage = Object.values(errorMessages).flat()[0];
@@ -156,6 +209,7 @@ const LoansSection = ({ response }) => {
       refId: record.rfid,
       status: isOverdue ? "overdue" : "on-time",
       overdueDays: record.daysLeft !== undefined && record.daysLeft < 0 ? Math.abs(record.daysLeft) : 0,
+      fineAmount: record.fineAmount || 0,
     };
 
     const items = [
@@ -171,7 +225,12 @@ const LoansSection = ({ response }) => {
     ];
 
     setSelectedCheckInUserData({ ...userData, items });
-    setIsCheckInDialogOpen(true);
+
+    if (isOverdue) {
+      setIsFineDialogOpen(true);
+    } else {
+      setIsCheckInDialogOpen(true);
+    }
   };
 
   const parseRenewalCount = (renewalCount) => {
@@ -451,6 +510,19 @@ const LoansSection = ({ response }) => {
                 overdueDays: selectedCheckInUserData.overdueDays || 0
             } : null}
             onConfirm={handleCheckInConfirm}
+            loading={isReturningBook}
+          />
+          <FineConfirmDialog
+            isOpen={isFineDialogOpen}
+            onOpenChange={setIsFineDialogOpen}
+            item={selectedCheckInUserData ? {
+                title: selectedCheckInUserData.title || selectedCheckInUserData.bookTitle,
+                refId: selectedCheckInUserData.refId || selectedCheckInUserData.bookId,
+                overdueDays: selectedCheckInUserData.overdueDays || 0,
+                fineAmount: Number(selectedCheckInUserData.fineAmount || 0),
+            } : null}
+            onConfirm={handleFineConfirm}
+            onWaive={handleWaiveConfirm}
             loading={isReturningBook}
           />
           <ConfirmSuccessPopup
